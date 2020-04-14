@@ -31,6 +31,7 @@ def jarFile = file("$buildDir/libs/intellij-common-${projectVersion}.jar")
 publishing {
     publications {
         mavenJava(MavenPublication) {
+            from project.components.java
             artifact jarFile
         }
     }
