@@ -32,7 +32,6 @@ publishing {
     publications {
         mavenJava(MavenPublication) {
             from project.components.java
-            artifact jarFile
         }
     }
     repositories {
