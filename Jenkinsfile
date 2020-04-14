@@ -21,7 +21,7 @@ node('rhel7'){
 
 	stage('Deploy') {
 		withCredentials([usernamePassword(credentialsId: 'Nexus-IJ-Credentials', usernameVariable: 'USER', passwordVariable: 'PASSWORD')]) {
-			sh "./gradlew publish -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
+			sh "./gradlew build publish -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
 		}
 	}
 
