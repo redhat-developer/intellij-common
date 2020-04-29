@@ -32,6 +32,21 @@ public abstract class TreeAction extends AnAction {
         return (Tree) e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     }
 
+    protected Object getSelected(Tree tree) {
+        return tree.getSelectionModel().getSelectionPath().getLastPathComponent();
+    }
+
+    /**
+     * Allows to adjust the selected user object for models that users intermediate user object
+     * (see {@link com.intellij.ui.tree.StructureTreeModel}
+     *
+     * @param selected the original selected user object
+     * @return the real user object
+     */
+    protected Object adjust(Object selected) {
+        return selected;
+    }
+
     @Override
     public void update(AnActionEvent e) {
         boolean visible = false;
@@ -39,7 +54,7 @@ public abstract class TreeAction extends AnAction {
 
         if (comp instanceof Tree) {
             TreePath selectPath = ((Tree) comp).getSelectionModel().getSelectionPath();
-            visible = isVisible(selectPath.getLastPathComponent());
+            visible = isVisible(adjust(selectPath.getLastPathComponent()));
         }
         e.getPresentation().setVisible(visible);
     }
