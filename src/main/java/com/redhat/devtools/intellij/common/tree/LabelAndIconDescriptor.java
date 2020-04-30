@@ -18,32 +18,31 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
-import java.util.function.Function;
 
 public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
 
     private final T element;
-    private final Function<T, String> labelProvider;
-    private final Function<T, String> locationProvider;
+    private final String label;
+    private final String location;
     private final Icon nodeIcon;
 
-    public LabelAndIconDescriptor(Project project, T element, Function<T, String> labelProvider, Function<T, String> locationProvider, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
+    public LabelAndIconDescriptor(Project project, T element, String label, String location, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
         super(project, parentDescriptor);
         this.element = element;
-        this.labelProvider = labelProvider;
-        this.locationProvider = locationProvider;
+        this.label = label;
+        this.location = location;
         this.nodeIcon = nodeIcon;
     }
 
-    public LabelAndIconDescriptor(Project project, T element, Function<T, String> labelProvider, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
-        this(project, element, labelProvider, null, nodeIcon,parentDescriptor);
+    public LabelAndIconDescriptor(Project project, T element, String label, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
+        this(project, element, label, null, nodeIcon,parentDescriptor);
     }
 
     @Override
     protected void update(@NotNull PresentationData presentation) {
-        presentation.setPresentableText(labelProvider.apply(element));
-        if (locationProvider != null) {
-            presentation.setLocationString(locationProvider.apply(element));
+        presentation.setPresentableText(label);
+        if (location != null) {
+            presentation.setLocationString(location);
         }
         if (nodeIcon != null) {
             presentation.setIcon(nodeIcon);

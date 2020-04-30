@@ -10,7 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.tree;
 
-public interface MutableStructure<T> {
+public interface MutableModel<T> {
     interface Listener<T> {
         void onAdded(T element);
         void onModified(T element);

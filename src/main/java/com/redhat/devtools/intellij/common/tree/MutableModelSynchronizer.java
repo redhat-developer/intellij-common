@@ -19,18 +19,18 @@ import javax.swing.tree.TreePath;
 import java.util.Enumeration;
 import java.util.function.Supplier;
 
-public class MutableStructureSynchronizer<T> implements MutableStructure.Listener<T> {
+public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
     private final StructureTreeModel treeModel;
     private final AbstractTreeStructure structure;
-    private final MutableStructure<T> mutableStructure;
+    private final MutableModel<T> mutableModel;
 
-    public MutableStructureSynchronizer(StructureTreeModel treeModel,
-                                        AbstractTreeStructure structure,
-                                        MutableStructure<T> mutableStructure) {
+    public MutableModelSynchronizer(StructureTreeModel treeModel,
+                                    AbstractTreeStructure structure,
+                                    MutableModel<T> mutableModel) {
         this.treeModel = treeModel;
         this.structure = structure;
-        this.mutableStructure = mutableStructure;
-        this.mutableStructure.addListener(this);
+        this.mutableModel = mutableModel;
+        this.mutableModel.addListener(this);
     }
 
     private void invalidatePath(Supplier<TreePath> pathSupplier) {

@@ -13,7 +13,7 @@ package com.redhat.devtools.intellij.common.tree;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MutableStructureSupport<T> implements MutableStructure<T> {
+public class MutableModelSupport<T> implements MutableModel<T> {
     private final List<Listener<T>> listeners = new ArrayList<>();
 
     @Override
