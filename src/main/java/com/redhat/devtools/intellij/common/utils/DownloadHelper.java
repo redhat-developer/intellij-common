@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -30,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,10 +39,9 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -80,46 +78,46 @@ public class DownloadHelper {
         return INSTANCE;
     }
 
-    /**
-     * Download tool if required. First look at PATH then use the configuration file provided by the url to download the
-     * tool.
-     * The format of the file is the following:
-     * <pre>
-     * {
-     *   "tools": {
-     *     "tool": {
-     *       "version": "1.0.0",
-     *       "versionCmd": "version", //the argument(s) to add to cmdFileName to get the version
-     *       "versionExtractRegExp": "", //the regular expression to extract the version string from the version command
-     *       "versionMatchRegExpr": "", //the regular expression use to match the extracted version to decide if download if required
-     *       "baseDir": "" //the basedir to install to, a sub folder named after version will be created, can use $HOME
-     *       "platforms": {
-     *         "win": {
-     *           "url": "https://tool.com/tool/v1.0.0/odo-windows-amd64.exe.tar.gz",
-     *           "cmdFileName": "tool.exe",
-     *           "dlFileName": "tool-windows-amd64.exe.gz"
-     *         },
-     *         "osx": {
-     *           "url": "https://tool.com/tool/v1.0.0/odo-darwin-amd64.tar.gz",
-     *           "cmdFileName": "tool",
-     *           "dlFileName": "tool-darwin-amd64.gz"
-     *         },
-     *         "lnx": {
-     *           "url": "https://tool.com/tool/v1.0.0/odo-linux-amd64.tar.gz",
-     *           "cmdFileName": "odo",
-     *           "dlFileName": "odo-linux-amd64.gz"
-     *         }
-     *       }
-     *     }
-     *   }
-     * }
-     * </pre>
-     *
-     * @param toolName
-     * @param url
-     * @return
-     * @throws IOException
-     */
+        /**
+         * Download tool if required. First look at PATH then use the configuration file provided by the url to download the
+         * tool.
+         * The format of the file is the following:
+         * <pre>
+         * {
+         *   "tools": {
+         *     "tool": {
+         *       "version": "1.0.0",
+         *       "versionCmd": "version", //the argument(s) to add to cmdFileName to get the version
+         *       "versionExtractRegExp": "", //the regular expression to extract the version string from the version command
+         *       "versionMatchRegExpr": "", //the regular expression use to match the extracted version to decide if download if required
+         *       "baseDir": "" //the basedir to install to, a sub folder named after version will be created, can use $HOME
+         *       "platforms": {
+         *         "win": {
+         *           "url": "https://tool.com/tool/v1.0.0/odo-windows-amd64.exe.tar.gz",
+         *           "cmdFileName": "tool.exe",
+         *           "dlFileName": "tool-windows-amd64.exe.gz"
+         *         },
+         *         "osx": {
+         *           "url": "https://tool.com/tool/v1.0.0/odo-darwin-amd64.tar.gz",
+         *           "cmdFileName": "tool",
+         *           "dlFileName": "tool-darwin-amd64.gz"
+         *         },
+         *         "lnx": {
+         *           "url": "https://tool.com/tool/v1.0.0/odo-linux-amd64.tar.gz",
+         *           "cmdFileName": "odo",
+         *           "dlFileName": "odo-linux-amd64.gz"
+         *         }
+         *       }
+         *     }
+         *   }
+         * }
+         * </pre>
+         *
+         * @param toolName the name of the tool to download
+         * @param url the URL to the tool description file
+         * @return the command path
+         * @throws IOException
+         */
     public String downloadIfRequired(String toolName, URL url) throws IOException {
         ToolsConfig config = ConfigHelper.loadToolsConfig(url);
         ToolsConfig.Tool tool = config.getTools().get(toolName);
@@ -155,6 +153,18 @@ public class DownloadHelper {
             }
         }
         return command;
+    }
+
+    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
+        CompletableFuture<String> result = new CompletableFuture<>();
+        ApplicationManager.getApplication().invokeLater(() -> {
+            try {
+                result.complete(downloadIfRequired(toolName, url));
+            } catch (IOException e) {
+                result.completeExceptionally(e);
+            }
+        });
+        return result;
     }
 
     private boolean isDownloadAllowed(String tool, String currentVersion, String requiredVersion) {
