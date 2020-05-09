@@ -209,55 +209,66 @@ public class ExecHelper {
       return delegate.isAlive();
     }
   }
-
   private static void executeWithTerminalInternal(Project project, String title, File workingDirectory, boolean waitForProcessExit, String... command) throws IOException {
-      try {
-        ProcessBuilder builder = new ProcessBuilder(command).directory(workingDirectory).redirectErrorStream(true);
-        Process p = builder.start();
-        boolean isPost2018_3 = ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 183;
-        p = new RedirectedProcess(p, true, isPost2018_3);
+    try {
+      ProcessBuilder builder = new ProcessBuilder(command).directory(workingDirectory).redirectErrorStream(true);
+      Process p = builder.start();
+      linkProcessToTerminal(p, project, title, waitForProcessExit);
+    } catch (IOException e) {
+      throw e;
+    }
+  }
 
-        final Process process = p;
-        AbstractTerminalRunner runner = new AbstractTerminalRunner(project) {
+  private static AbstractTerminalRunner createTerminalRunner(Project project, Process process, String title) {
+    AbstractTerminalRunner runner = new AbstractTerminalRunner(project) {
+      @Override
+      protected Process createProcess(@Nullable String s) {
+        return process;
+      }
+
+      @Override
+      protected ProcessHandler createProcessHandler(Process process) {
+        return null;
+      }
+
+      @Override
+      protected String getTerminalConnectionName(Process process) {
+        return null;
+      }
+
+      @Override
+      protected TtyConnector createTtyConnector(Process process) {
+        return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
           @Override
-          protected Process createProcess(@Nullable String s) {
-            return process;
+          protected void resizeImmediately() {
           }
 
           @Override
-          protected ProcessHandler createProcessHandler(Process process) {
-            return null;
+          public String getName() {
+            return title;
           }
 
           @Override
-          protected String getTerminalConnectionName(Process process) {
-            return null;
-          }
-
-          @Override
-          protected TtyConnector createTtyConnector(Process process) {
-            return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
-              @Override
-              protected void resizeImmediately() {
-              }
-
-              @Override
-              public String getName() {
-                return title;
-              }
-
-              @Override
-              public boolean isConnected() {
-                return true;
-              }
-            };
-          }
-
-          @Override
-          public String runningTargetName() {
-            return null;
+          public boolean isConnected() {
+            return true;
           }
         };
+      }
+
+      @Override
+      public String runningTargetName() {
+        return null;
+      }
+    };
+    return runner;
+  }
+
+  public static void linkProcessToTerminal(Process p, Project project, String title,  boolean waitForProcessExit) throws IOException {
+      try {
+        boolean isPost2018_3 = ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 183;
+        final RedirectedProcess process = new RedirectedProcess(p, true, isPost2018_3);
+        AbstractTerminalRunner runner = createTerminalRunner(project, process, title);
+
         TerminalOptionsProvider terminalOptions = ServiceManager.getService(TerminalOptionsProvider.class);
         terminalOptions.setCloseSessionOnLogout(false);
         final TerminalView view = TerminalView.getInstance(project);
@@ -265,8 +276,7 @@ public class ExecHelper {
         final Object[][] parameters = new Object[1][];
         try {
           method[0] = TerminalView.class.getMethod("createNewSession", new Class[] {Project.class, AbstractTerminalRunner.class});
-          parameters[0] = new Object[] {project,
-                                      runner};
+          parameters[0] = new Object[] {project, runner};
         } catch (NoSuchMethodException e) {
           try {
             method[0] = TerminalView.class.getMethod("createNewSession", new Class[] {AbstractTerminalRunner.class});
