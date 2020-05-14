@@ -15,6 +15,8 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import org.apache.commons.exec.CommandLine;
@@ -263,8 +265,22 @@ public class ExecHelper {
     return runner;
   }
 
+  /**
+   * Ensure the terminal window tab is created. This is required because some IJ editions (2018.3) do not
+   * initialize this window when you create a TerminalView through {@link #linkProcessToTerminal(Process, Project, String, boolean)}
+   *
+   * @param project the IJ project
+   */
+  public static void ensureTerminalWindowsIsOpened(Project project) {
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
+    if (toolWindow != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> toolWindow.show(null));
+    }
+  }
+
   public static void linkProcessToTerminal(Process p, Project project, String title,  boolean waitForProcessExit) throws IOException {
       try {
+        ensureTerminalWindowsIsOpened(project);
         boolean isPost2018_3 = ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 183;
         final RedirectedProcess process = new RedirectedProcess(p, true, isPost2018_3);
         AbstractTerminalRunner runner = createTerminalRunner(project, process, title);
