@@ -19,4 +19,5 @@ public class CommonConstants {
     public static final Key<Project> PROJECT = Key.create("com.redhat.devtools.intellij.common.project");
     public static final Key<Long> LAST_MODIFICATION_STAMP = Key.create("com.redhat.devtools.intellij.common.last.modification.stamp");
 
+    public static final Key<Boolean> TREE_MULTIPLE_SELECTION = Key.create("com.redhat.devtools.intellij.common.tree.multiple.selection");
 }

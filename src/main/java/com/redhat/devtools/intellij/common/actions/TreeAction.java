@@ -17,14 +17,24 @@ import com.intellij.ui.treeStructure.Tree;
 
 import javax.swing.tree.TreePath;
 import java.awt.Component;
+import java.lang.reflect.Array;
+import java.util.Arrays;
 import java.util.stream.Stream;
+
+import static com.redhat.devtools.intellij.common.CommonConstants.TREE_MULTIPLE_SELECTION;
 
 public abstract class TreeAction extends AnAction {
 
-
     private Class[] filters;
+    private boolean acceptMultipleItems;
 
     public TreeAction(Class... filters) {
+        this.acceptMultipleItems = false;
+        this.filters = filters;
+    }
+
+    public TreeAction(boolean acceptMultipleItems, Class... filters) {
+        this.acceptMultipleItems = acceptMultipleItems;
         this.filters = filters;
     }
 
@@ -34,6 +44,11 @@ public abstract class TreeAction extends AnAction {
 
     protected Object getSelected(Tree tree) {
         return tree.getSelectionModel().getSelectionPath().getLastPathComponent();
+    }
+
+    protected Object[] getSelectedNodes(Tree tree) {
+        TreePath[] treePaths = tree.getSelectionModel().getSelectionPaths();
+        return Arrays.stream(treePaths).map(path -> path.getLastPathComponent()).toArray(Object[]::new);
     }
 
     /**
@@ -53,8 +68,10 @@ public abstract class TreeAction extends AnAction {
         Component comp = getTree(e);
 
         if (comp instanceof Tree) {
-            TreePath selectPath = ((Tree) comp).getSelectionModel().getSelectionPath();
-            visible = isVisible(adjust(selectPath.getLastPathComponent()));
+            boolean treeMultipleSelectionEnabled = ((Tree) comp).getClientProperty(TREE_MULTIPLE_SELECTION) == null ?
+                                                    false :
+                                                    (boolean) ((Tree) comp).getClientProperty(TREE_MULTIPLE_SELECTION);
+            visible = isVisible(treeMultipleSelectionEnabled, getSelectedNodes((Tree) comp));
         }
         e.getPresentation().setVisible(visible);
     }
@@ -63,14 +80,38 @@ public abstract class TreeAction extends AnAction {
         return Stream.of(filters).anyMatch(cl -> cl.isAssignableFrom(selected.getClass()));
     }
 
+    public boolean isVisible(boolean treeMultipleSelectionEnabled, Object[] selected) {
+        if (!treeMultipleSelectionEnabled) {
+            return isVisible(adjust(selected[0]));
+        }
+
+        if (!acceptMultipleItems && selected.length > 1) {
+            return false;
+        }
+
+        for (Object item: selected) {
+            if (Stream.of(filters).noneMatch(cl -> cl.isAssignableFrom(adjust(item).getClass()))) {
+                return false;
+            }
+        }
+        return true;
+    }
 
     @Override
     public void actionPerformed(AnActionEvent anActionEvent) {
         Tree tree = getTree(anActionEvent);
-        TreePath selectedPath = tree.getSelectionModel().getSelectionPath();
-        Object selected = selectedPath.getLastPathComponent();
-        actionPerformed(anActionEvent, selectedPath, selected);
+        TreePath[] selectedPaths = tree.getSelectionModel().getSelectionPaths();
+        Object[] selected = getSelectedNodes(tree);
+        if (acceptMultipleItems) {
+            actionPerformed(anActionEvent, selectedPaths, selected);
+        } else {
+            actionPerformed(anActionEvent, selectedPaths[0], selected[0]);
+        }
     }
 
     public abstract void actionPerformed(AnActionEvent anActionEvent, TreePath path, Object selected);
+
+    public void actionPerformed(AnActionEvent anActionEvent, TreePath[] path, Object[] selected) {
+        actionPerformed(anActionEvent, path[0], selected[0]);
+    }
 }
