@@ -19,8 +19,8 @@ public abstract class StructureTreeAction extends TreeAction {
         super(filters);
     }
 
-    public StructureTreeAction(boolean multipleSelection, Class... filters) {
-        super(multipleSelection, filters);
+    public StructureTreeAction(boolean acceptMultipleItems, Class... filters) {
+        super(acceptMultipleItems, filters);
     }
 
     public static <T> T getElement(Object selected) {
