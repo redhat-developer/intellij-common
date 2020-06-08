@@ -17,11 +17,8 @@ import com.intellij.ui.treeStructure.Tree;
 
 import javax.swing.tree.TreePath;
 import java.awt.Component;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.stream.Stream;
-
-import static com.redhat.devtools.intellij.common.CommonConstants.TREE_MULTIPLE_SELECTION;
 
 public abstract class TreeAction extends AnAction {
 
@@ -68,10 +65,7 @@ public abstract class TreeAction extends AnAction {
         Component comp = getTree(e);
 
         if (comp instanceof Tree) {
-            boolean treeMultipleSelectionEnabled = ((Tree) comp).getClientProperty(TREE_MULTIPLE_SELECTION) == null ?
-                                                    false :
-                                                    (boolean) ((Tree) comp).getClientProperty(TREE_MULTIPLE_SELECTION);
-            visible = isVisible(treeMultipleSelectionEnabled, getSelectedNodes((Tree) comp));
+            visible = isVisible(getSelectedNodes((Tree) comp));
         }
         e.getPresentation().setVisible(visible);
     }
@@ -80,11 +74,7 @@ public abstract class TreeAction extends AnAction {
         return Stream.of(filters).anyMatch(cl -> cl.isAssignableFrom(selected.getClass()));
     }
 
-    public boolean isVisible(boolean treeMultipleSelectionEnabled, Object[] selected) {
-        if (!treeMultipleSelectionEnabled) {
-            return isVisible(adjust(selected[0]));
-        }
-
+    public boolean isVisible(Object[] selected) {
         if (!acceptMultipleItems && selected.length > 1) {
             return false;
         }
@@ -102,11 +92,7 @@ public abstract class TreeAction extends AnAction {
         Tree tree = getTree(anActionEvent);
         TreePath[] selectedPaths = tree.getSelectionModel().getSelectionPaths();
         Object[] selected = getSelectedNodes(tree);
-        if (acceptMultipleItems) {
-            actionPerformed(anActionEvent, selectedPaths, selected);
-        } else {
-            actionPerformed(anActionEvent, selectedPaths[0], selected[0]);
-        }
+        actionPerformed(anActionEvent, selectedPaths, selected);
     }
 
     public abstract void actionPerformed(AnActionEvent anActionEvent, TreePath path, Object selected);
