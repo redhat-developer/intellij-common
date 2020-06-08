@@ -19,6 +19,10 @@ public abstract class StructureTreeAction extends TreeAction {
         super(filters);
     }
 
+    public StructureTreeAction(boolean acceptMultipleItems, Class... filters) {
+        super(acceptMultipleItems, filters);
+    }
+
     public static <T> T getElement(Object selected) {
         if (selected instanceof DefaultMutableTreeNode) {
             selected = ((DefaultMutableTreeNode)selected).getUserObject();
