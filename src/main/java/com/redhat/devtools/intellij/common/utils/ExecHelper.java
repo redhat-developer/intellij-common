@@ -39,6 +39,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +59,8 @@ public class ExecHelper {
     SERVICE.submit(runnable);
   }
 
-  public static String execute(String executable, boolean checkExitCode, File workingDirectory, String... arguments) throws IOException {
+  public static String execute(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
+                               String... arguments) throws IOException {
     DefaultExecutor executor = new DefaultExecutor() {
       @Override
       public boolean isFailure(int exitValue) {
@@ -72,24 +76,39 @@ public class ExecHelper {
     executor.setStreamHandler(handler);
     executor.setWorkingDirectory(workingDirectory);
     CommandLine command = new CommandLine(executable).addArguments(arguments, false);
+    Map<String, String> env = new HashMap<>(System.getenv());
+    env.putAll(envs);
     try {
-      executor.execute(command);
+      executor.execute(command, env);
       return writer.toString();
     } catch (IOException e) {
       throw new IOException(e.getLocalizedMessage() + " " + writer.toString(), e);
     }
   }
 
+  public static String execute(String executable, File workingDirectory, Map<String, String> envs, String... arguments) throws IOException {
+    return execute(executable, true, workingDirectory, envs, arguments);
+  }
+
+  public static String execute(String executable, Map<String, String> envs, String... arguments) throws IOException {
+    return execute(executable, true, new File(HOME_FOLDER), envs, arguments);
+  }
+
   public static String execute(String executable, String... arguments) throws IOException {
-    return execute(executable, true, new File(HOME_FOLDER), arguments);
+    return execute(executable, Collections.emptyMap(), arguments);
   }
 
   public static String execute(String executable, File workingDirectory, String... arguments) throws IOException {
-    return execute(executable, true, workingDirectory, arguments);
+    return execute(executable, true, workingDirectory, Collections.emptyMap(), arguments);
+  }
+
+  public static String execute(String executable, boolean checkExitCode, Map<String, String> envs,
+                               String... arguments) throws IOException {
+    return execute(executable, checkExitCode, new File(HOME_FOLDER), envs, arguments);
   }
 
   public static String execute(String executable, boolean checkExitCode, String... arguments) throws IOException {
-    return execute(executable, checkExitCode, new File(HOME_FOLDER), arguments);
+    return execute(executable, checkExitCode, new File(HOME_FOLDER), Collections.emptyMap(), arguments);
   }
 
   private static class RedirectedStream extends FilterInputStream {
@@ -211,9 +230,12 @@ public class ExecHelper {
       return delegate.isAlive();
     }
   }
-  private static void executeWithTerminalInternal(Project project, String title, File workingDirectory, boolean waitForProcessExit, String... command) throws IOException {
+  private static void executeWithTerminalInternal(Project project, String title, File workingDirectory,
+                                                  boolean waitForProcessExit, Map<String, String> envs,
+                                                  String... command) throws IOException {
     try {
       ProcessBuilder builder = new ProcessBuilder(command).directory(workingDirectory).redirectErrorStream(true);
+      builder.environment().putAll(envs);
       Process p = builder.start();
       linkProcessToTerminal(p, project, title, waitForProcessExit);
     } catch (IOException e) {
@@ -317,25 +339,35 @@ public class ExecHelper {
       }
   }
 
-  public static void executeWithTerminal(Project project, String title, File workingDirectory, boolean waitForProcessToExit, String... command) throws IOException {
+  public static void executeWithTerminal(Project project, String title, File workingDirectory,
+                                         boolean waitForProcessToExit, Map<String, String> envs, String... command) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      execute(command[0], workingDirectory, Arrays.stream(command)
+      execute(command[0], workingDirectory, envs, Arrays.stream(command)
               .skip(1)
               .toArray(String[]::new));
     } else {
-      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, command);
+      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, envs, command);
     }
   }
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory, String... command) throws IOException {
-    executeWithTerminal(project, title, workingDirectory, true, command);
+    executeWithTerminal(project, title, workingDirectory, true, Collections.emptyMap(), command);
+  }
+
+  public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit,
+                                         Map<String, String> envs, String... command) throws IOException {
+    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, envs, command);
   }
 
   public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, Collections.emptyMap(), command);
+  }
+
+  public static void executeWithTerminal(Project project, String title, Map<String, String> envs, String... command) throws IOException {
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, command);
   }
 
   public static void executeWithTerminal(Project project, String title, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), true, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), command);
   }
 }
