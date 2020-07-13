@@ -15,11 +15,9 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.util.io.HttpRequests;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import com.twelvemonkeys.lang.Platform;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -138,16 +136,15 @@ public class DownloadHelper {
                     command = ProgressManager.getInstance().run(new Task.WithResult<String, IOException>(null, "Downloading " + toolName, true) {
                         @Override
                         public String compute(@NotNull ProgressIndicator progressIndicator) throws IOException {
-                            OkHttpClient client = NetworkUtils.getClient();
-                            Request request = new Request.Builder().url(platform.getUrl()).build();
-                            Response response = client.newCall(request).execute();
-                            downloadFile(response.body().byteStream(), dlFilePath, progressIndicator, response.body().contentLength());
-                            if (progressIndicator.isCanceled()) {
-                                throw new IOException("Cancelled");
-                            } else {
-                                uncompress(dlFilePath, path);
-                                return cmd;
-                            }
+                            return HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
+                               downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
+                               if (progressIndicator.isCanceled()) {
+                                   throw new IOException("Cancelled");
+                               } else {
+                                   uncompress(dlFilePath, path);
+                                   return cmd;
+                               }
+                            });
                         }
                     });
                 }
