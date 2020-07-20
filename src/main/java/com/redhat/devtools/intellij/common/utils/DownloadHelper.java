@@ -136,7 +136,7 @@ public class DownloadHelper {
                     command = ProgressManager.getInstance().run(new Task.WithResult<String, IOException>(null, "Downloading " + toolName, true) {
                         @Override
                         public String compute(@NotNull ProgressIndicator progressIndicator) throws IOException {
-                            return HttpRequests.request(platform.getUrl().toString()).connect(request -> {
+                            return HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
                                downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
                                if (progressIndicator.isCanceled()) {
                                    throw new IOException("Cancelled");
