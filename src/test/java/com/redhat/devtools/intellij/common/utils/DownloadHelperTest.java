@@ -19,8 +19,8 @@ public class DownloadHelperTest extends LightPlatformTestCase {
 
     @Override
     protected void tearDown() throws Exception {
-        super.tearDown();
         Messages.setTestDialog(previous);
+        super.tearDown();
         FileUtils.deleteDirectory(new File("cache"));
     }
 
