@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
@@ -27,6 +28,10 @@ public class ConfigWatcher implements Runnable {
 
     public interface Listener {
         void onUpdate(ConfigWatcher source, Config config);
+    }
+
+    public ConfigWatcher(String config, Listener listener) {
+        this(Paths.get(config), listener);
     }
 
     public ConfigWatcher(Path config, Listener listener) {
@@ -46,9 +51,9 @@ public class ConfigWatcher implements Runnable {
 
     protected Config loadConfig() {
         try {
-            return ConfigHelper.loadKubeConfig();
+            return ConfigHelper.loadKubeConfig(config.toAbsolutePath().toString());
         } catch (IOException e) {
-                return null;
+            return null;
         }
     }
 
