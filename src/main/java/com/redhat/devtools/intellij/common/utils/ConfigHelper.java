@@ -41,7 +41,11 @@ public class ConfigHelper {
     }
 
     public static Config loadKubeConfig() throws IOException {
-        File f = new File(getKubeConfigPath());
+        return loadKubeConfig(getKubeConfigPath());
+    }
+
+    public static Config loadKubeConfig(String path) throws IOException {
+        File f = new File(path);
         if (f.exists()) {
             return KubeConfigUtils.parseConfig(f);
         } else {
