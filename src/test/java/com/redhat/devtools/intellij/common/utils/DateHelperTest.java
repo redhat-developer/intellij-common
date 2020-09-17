@@ -81,4 +81,11 @@ public class DateHelperTest {
         String res = DateHelper.humanizeDate(startTime, endTime);
         assertEquals(res, "374 d ");
     }
+
+    @Test
+    public void shouldOnlyPrint0SecondsIfStartIsOlderThanEnd() {
+        Instant endTime = Instant.parse("2020-04-09T05:52:57Z");
+        String res = DateHelper.humanizeDate(startTime, endTime);
+        assertEquals(res, "0 s ");
+    }
 }
