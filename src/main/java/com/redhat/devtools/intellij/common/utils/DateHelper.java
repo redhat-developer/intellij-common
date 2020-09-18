@@ -27,6 +27,9 @@ public class DateHelper {
         seconds %= 3600;
         int minutes = (int) (seconds / 60);
         seconds %= 60;
+        if (seconds < 0) {
+            seconds = 0;
+        }
 
         String date = "";
         if (days > 0) {
