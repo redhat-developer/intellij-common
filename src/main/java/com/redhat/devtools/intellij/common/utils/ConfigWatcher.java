@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.openapi.diagnostic.Logger;
 import io.fabric8.kubernetes.api.model.Config;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,6 +24,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 
 public class ConfigWatcher implements Runnable {
+
     private final Path config;
     protected Listener listener;
 
@@ -68,7 +70,8 @@ public class ConfigWatcher implements Runnable {
                 key.reset();
             }
         } catch (IOException | InterruptedException e) {
-            e.printStackTrace();
+            Logger.getInstance(ConfigWatcher.class).warn(
+                    "Could not watch kubernetes config file at " + config.toAbsolutePath(), e);
         }
     }
 
