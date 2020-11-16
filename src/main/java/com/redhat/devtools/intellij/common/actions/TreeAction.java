@@ -71,7 +71,8 @@ public abstract class TreeAction extends AnAction {
     }
 
     public boolean isVisible(Object selected) {
-        return Stream.of(filters).anyMatch(cl -> cl.isAssignableFrom(selected.getClass()));
+        return Stream.of(filters)
+                .anyMatch(cl -> cl.isAssignableFrom(selected.getClass()));
     }
 
     public boolean isVisible(Object[] selected) {
@@ -80,7 +81,10 @@ public abstract class TreeAction extends AnAction {
         }
 
         for (Object item: selected) {
-            if (Stream.of(filters).noneMatch(cl -> cl.isAssignableFrom(adjust(item).getClass()))) {
+            Object adjusted = adjust(item);
+            if (adjusted == null
+                || Stream.of(filters)
+                        .noneMatch(cl -> cl.isAssignableFrom(adjusted.getClass()))) {
                 return false;
             }
         }
