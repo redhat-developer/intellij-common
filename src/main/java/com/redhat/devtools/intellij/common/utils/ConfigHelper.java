@@ -15,11 +15,15 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.Config;
 import io.fabric8.kubernetes.api.model.ConfigBuilder;
 import io.fabric8.kubernetes.api.model.Context;
+import io.fabric8.kubernetes.api.model.NamedContext;
 import io.fabric8.kubernetes.client.internal.KubeConfigUtils;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 public class ConfigHelper {
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -82,4 +86,36 @@ public class ConfigHelper {
             return null;
         }
     }
+
+    /**
+     * Returns {@code true} if both given contexts are equal. They are considered equal if they're equal in
+     * <ul>
+     *     <li>cluster</li>
+     *     <li>user</li>
+     *     <li>current namespace</li>
+     *     <li>extensions</li>
+     * </ul>
+     *
+     *
+     * @param thisContext
+     * @param thatContext
+     * @return true if both contexts are equal
+     *
+     * @see NamedContext
+     * @see Context
+     */
+    public static boolean areEqual(NamedContext thisContext, NamedContext thatContext) {
+        if (thisContext == null) {
+            return thatContext == null;
+        } else if (thatContext == null) {
+            return false;
+        }
+
+        return Objects.equals(thisContext.getContext(), thatContext.getContext());
+    }
+
+    public static boolean areEqual(Collection<NamedContext> these, Collection<NamedContext> those) {
+        return Objects.equals(these, those);
+    }
+
 }
