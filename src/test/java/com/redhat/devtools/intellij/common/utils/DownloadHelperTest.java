@@ -1,6 +1,5 @@
 package com.redhat.devtools.intellij.common.utils;
 
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.testFramework.LightPlatformTestCase;
 import org.apache.commons.io.FileUtils;
@@ -13,13 +12,13 @@ public class DownloadHelperTest extends LightPlatformTestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        previous = Messages.setTestDialog(TestDialog.OK);
+        previous = MessagesHelper.setTestDialog(TestDialog.OK);
         FileUtils.deleteDirectory(new File("cache"));
     }
 
     @Override
     protected void tearDown() throws Exception {
-        Messages.setTestDialog(previous);
+        MessagesHelper.setTestDialog(previous);
         super.tearDown();
         FileUtils.deleteDirectory(new File("cache"));
     }
