@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 public class ConfigHelper {
@@ -78,7 +77,7 @@ public class ConfigHelper {
         return mapper.readValue(url, ToolsConfig.class);
     }
 
-    public static Context getCurrentContext() {
+    public static NamedContext getCurrentContext() {
         try {
             Config config = loadKubeConfig();
             return KubeConfigUtils.getCurrentContext(config);
