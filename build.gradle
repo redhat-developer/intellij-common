@@ -20,7 +20,7 @@ intellij {
 }
 
 dependencies {
-    compile 'io.fabric8:kubernetes-client:4.9.0'
+    compile 'io.fabric8:kubernetes-client:5.0.0'
     compile 'org.apache.commons:commons-exec:1.3'
 }
 
