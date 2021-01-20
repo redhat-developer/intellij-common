@@ -20,8 +20,12 @@ intellij {
 }
 
 dependencies {
-    compile 'io.fabric8:kubernetes-client:5.0.0'
-    compile 'org.apache.commons:commons-exec:1.3'
+    implementation(
+            'com.segment.analytics.java:analytics:+',
+            'io.fabric8:kubernetes-client:5.0.0',
+            'org.apache.commons:commons-exec:1.3',
+            'com.squareup.okhttp3:okhttp:4.9.0',
+    )
     testImplementation(
             'org.assertj:assertj-core:3.17.1',
             'org.mockito:mockito-inline:3.7.0'
