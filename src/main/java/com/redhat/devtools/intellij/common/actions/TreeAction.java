@@ -83,8 +83,7 @@ public abstract class TreeAction extends AnAction {
         for (Object item: selected) {
             Object adjusted = adjust(item);
             if (adjusted == null
-                || Stream.of(filters)
-                        .noneMatch(cl -> cl.isAssignableFrom(adjusted.getClass()))) {
+                || isVisible(adjusted)) {
                 return false;
             }
         }
