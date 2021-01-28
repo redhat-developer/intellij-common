@@ -83,7 +83,7 @@ public abstract class TreeAction extends AnAction {
         for (Object item: selected) {
             Object adjusted = adjust(item);
             if (adjusted == null
-                || isVisible(adjusted)) {
+                || !isVisible(adjusted)) {
                 return false;
             }
         }
