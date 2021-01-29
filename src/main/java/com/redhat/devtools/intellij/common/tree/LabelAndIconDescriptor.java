@@ -18,15 +18,28 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
+import java.util.function.Supplier;
 
 public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
 
     private final T element;
-    private final String label;
-    private final String location;
-    private final Icon nodeIcon;
+    private final Supplier<String> label;
+    private final Supplier<String> location;
+    private final Supplier<Icon> nodeIcon;
 
     public LabelAndIconDescriptor(Project project, T element, String label, String location, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
+        super(project, parentDescriptor);
+        this.element = element;
+        this.label = () -> label;
+        this.location = () -> location;
+        this.nodeIcon = () -> nodeIcon;
+    }
+
+    public LabelAndIconDescriptor(Project project, T element, String label, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
+        this(project, element, label, null, nodeIcon,parentDescriptor);
+    }
+
+    public LabelAndIconDescriptor(Project project, T element, Supplier<String> label, Supplier<String> location, Supplier<Icon> nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
         super(project, parentDescriptor);
         this.element = element;
         this.label = label;
@@ -34,18 +47,18 @@ public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
         this.nodeIcon = nodeIcon;
     }
 
-    public LabelAndIconDescriptor(Project project, T element, String label, Icon nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
+    public LabelAndIconDescriptor(Project project, T element, Supplier<String> label, Supplier<Icon> nodeIcon, @Nullable NodeDescriptor parentDescriptor) {
         this(project, element, label, null, nodeIcon,parentDescriptor);
     }
 
     @Override
     protected void update(@NotNull PresentationData presentation) {
-        presentation.setPresentableText(label);
-        if (location != null) {
-            presentation.setLocationString(location);
+        presentation.setPresentableText(label.get());
+        if (location != null && location.get() != null) {
+            presentation.setLocationString(location.get());
         }
-        if (nodeIcon != null) {
-            presentation.setIcon(nodeIcon);
+        if (nodeIcon != null && nodeIcon.get() != null) {
+            presentation.setIcon(nodeIcon.get());
         }
     }
 
