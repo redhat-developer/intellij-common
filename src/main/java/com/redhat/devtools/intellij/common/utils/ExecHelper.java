@@ -15,10 +15,15 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
+import com.redhat.devtools.intellij.common.CommonConstants;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.function.Consumer;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
@@ -369,5 +374,35 @@ public class ExecHelper {
 
   public static void executeWithTerminal(Project project, String title, String... command) throws IOException {
     executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), command);
+  }
+
+  public static void executeWithUI(Map<String, String> envs, Runnable initRunnable, Consumer<String> runnable, String... command) throws IOException {
+    ProcessBuilder builder = (new ProcessBuilder(command)).directory(new File(CommonConstants.HOME_FOLDER)).redirectErrorStream(true);
+    builder.environment().putAll(envs);
+    Process p = builder.start();
+    linkProcessToUI(p, initRunnable, runnable);
+  }
+
+  public static void executeWithUI(Map<String, String> envs, Consumer<String> runnable, String... command) throws IOException {
+    executeWithUI(envs, null, runnable, command);
+  }
+
+  private static void linkProcessToUI(Process p, Runnable initRunnable, Consumer<String> runnable) {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (initRunnable != null) {
+        UIHelper.executeInUI(initRunnable);
+      }
+      StringBuilder sb = new StringBuilder();
+      String line;
+
+      try {
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), "UTF-8"));
+        while ((line = reader.readLine()) != null) {
+          sb.append(line).append("\n");
+
+          UIHelper.executeInUI(() -> runnable.accept(sb.toString()));
+        }
+      }catch(IOException e) {}
+    });
   }
 }
