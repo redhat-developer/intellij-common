@@ -2,6 +2,7 @@
 plugins {
     id "org.jetbrains.intellij" version "0.4.18"
     id 'maven-publish'
+    id 'io.codearte.nexus-staging' version "0.22.0"
 }
 
 repositories {
@@ -13,6 +14,7 @@ apply plugin: 'idea'
 apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 apply plugin: 'jacoco'
+apply plugin: 'io.codearte.nexus-staging'
 
 intellij {
     version ideaVersion //for a full list of IntelliJ IDEA releases please see https://www.jetbrains.com/intellij-repository/releases
@@ -41,6 +43,14 @@ task packageTests(type: Jar) {
 group 'com.redhat.devtools.intellij'
 version projectVersion // Plugin version
 
+
+nexusStaging {
+    serverUrl = 'https://repository.jboss.org/nexus/service/local/'
+    username = nexusUser
+    password = nexusPassword
+    packageGroup = 'JBoss Releases Staging Profile'
+}
+
 def testJarFile = file("$buildDir/libs/intellij-common-${projectVersion}-test.jar")
 def testArtifact = artifacts.add('archives', testJarFile) {
     type 'test'
@@ -57,7 +67,7 @@ publishing {
     }
     repositories {
         maven {
-            def releasesRepoUrl = "https://repository.jboss.org/nexus/content/groups/public/"
+            def releasesRepoUrl = "https://repository.jboss.org/nexus/service/local/staging/deploy/maven2"
             def snapshotsRepoUrl = "https://repository.jboss.org/nexus/content/repositories/snapshots/"
             url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
             credentials {

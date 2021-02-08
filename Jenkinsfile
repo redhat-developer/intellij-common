@@ -7,6 +7,9 @@ node('rhel7'){
 			branch: "${sha1}"
 	}
 
+	def props = readProperties file: 'gradle.properties'
+	def isSnapshot = props['projectVersion'].contains('-SNAPSHOT')
+
 	stage('Build') {
 		sh "./gradlew assemble"
 	}
@@ -17,7 +20,11 @@ node('rhel7'){
 
 	stage('Deploy') {
 		withCredentials([usernamePassword(credentialsId: 'Nexus-IJ-Credentials', usernameVariable: 'USER', passwordVariable: 'PASSWORD')]) {
-			sh "./gradlew publish -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
+			if (isSnapshot) {
+				sh "./gradlew publish -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
+			} else {
+				sh "./gradlew publish closeAndReleaseRepository -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
+			}
 		}
 	}
 
