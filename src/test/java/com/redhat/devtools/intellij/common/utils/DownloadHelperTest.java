@@ -36,4 +36,11 @@ public class DownloadHelperTest extends LightPlatformTestCase {
         assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", cmd);
         assertEquals(17, new File(cmd).length());
     }
+
+    public void testThatPlainFileDownloaded() throws IOException{
+        String cmd = DownloadHelper.getInstance().downloadIfRequired("kn", DownloadHelperTest.class.getResource("/knative-test.json"));
+        assertNotNull(cmd);
+        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", cmd);
+        assertEquals(17, new File(cmd).length());
+    }
 }

@@ -243,9 +243,14 @@ public class DownloadHelper {
                     save(subStream, cmd.resolveSibling(entry.getName()), entry.getSize());
                 }
             } else {
+                // we already has cmd downloaded, so just set executable bit
+                if(cmd.equals(dlFilePath)) {
+                    cmd.toFile().setExecutable(true);
+                    return;
+                }
                 save(subStream, cmd, -1L);
             }
-            } catch (RuntimeException e) {
+        } catch (RuntimeException e) {
             throw new IOException(e);
         }
     }
