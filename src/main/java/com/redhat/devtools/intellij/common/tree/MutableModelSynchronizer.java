@@ -20,7 +20,7 @@ import java.util.Enumeration;
 import java.util.function.Supplier;
 
 public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
-    private final StructureTreeModel treeModel;
+    protected final StructureTreeModel treeModel;
     private final AbstractTreeStructure structure;
     private final MutableModel<T> mutableModel;
 
@@ -51,7 +51,7 @@ public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
         return (T) structure.getParentElement(element);
     }
 
-    private TreePath getTreePath(T element) {
+    protected TreePath getTreePath(T element) {
         TreePath path;
         if (isRootNode(element)) {
             path = new TreePath(treeModel.getRoot());
@@ -61,7 +61,7 @@ public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
         return path!=null?path:new TreePath(treeModel.getRoot());
     }
 
-    private boolean isRootNode(T element) {
+    protected boolean isRootNode(T element) {
         NodeDescriptor descriptor = (NodeDescriptor) ((DefaultMutableTreeNode)treeModel.getRoot()).getUserObject();
         return descriptor != null && descriptor.getElement() == element;
     }
