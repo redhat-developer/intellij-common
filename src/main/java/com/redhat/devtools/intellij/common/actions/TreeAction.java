@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
 import java.awt.Component;
@@ -35,8 +36,13 @@ public abstract class TreeAction extends AnAction {
         this.filters = filters;
     }
 
+    @Nullable
     protected Tree getTree(AnActionEvent e) {
-        return (Tree) e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        if (component instanceof Tree) {
+            return (Tree) component;
+        }
+        return null;
     }
 
     protected Object getSelected(Tree tree) {
@@ -64,7 +70,7 @@ public abstract class TreeAction extends AnAction {
         boolean visible = false;
         Component comp = getTree(e);
 
-        if (comp instanceof Tree) {
+        if (comp != null) {
             visible = isVisible(getSelectedNodes((Tree) comp));
         }
         e.getPresentation().setVisible(visible);
@@ -80,10 +86,10 @@ public abstract class TreeAction extends AnAction {
             return false;
         }
 
-        for (Object item: selected) {
+        for (Object item : selected) {
             Object adjusted = adjust(item);
             if (adjusted == null
-                || !isVisible(adjusted)) {
+                    || !isVisible(adjusted)) {
                 return false;
             }
         }
