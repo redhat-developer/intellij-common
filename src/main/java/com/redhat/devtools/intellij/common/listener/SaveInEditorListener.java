@@ -62,7 +62,6 @@ public abstract class SaveInEditorListener extends FileDocumentSynchronizationVe
     protected boolean isFileToPush(Project project, VirtualFile vf) {
         FileEditor selectedEditor = FileEditorManager.getInstance(project).getSelectedEditor();
         // if file is not the one selected, skip it
-        if (selectedEditor == null || vf == null || !selectedEditor.getFile().equals(vf)) return false;
-        return true;
+        return !(selectedEditor == null || !selectedEditor.getFile().equals(vf));
     }
 }
