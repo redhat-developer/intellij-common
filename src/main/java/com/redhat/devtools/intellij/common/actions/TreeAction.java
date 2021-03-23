@@ -107,6 +107,10 @@ public abstract class TreeAction extends AnAction {
     public abstract void actionPerformed(AnActionEvent anActionEvent, TreePath path, Object selected);
 
     public void actionPerformed(AnActionEvent anActionEvent, TreePath[] path, Object[] selected) {
-        actionPerformed(anActionEvent, path[0], selected[0]);
+        if (selected.length == 0 || path.length == 0) {
+            actionPerformed(anActionEvent, (TreePath) null, null);
+        } else {
+            actionPerformed(anActionEvent, path[0], selected[0]);
+        }
     }
 }
