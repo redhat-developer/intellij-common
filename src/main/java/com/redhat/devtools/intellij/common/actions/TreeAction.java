@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.ui.treeStructure.Tree;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreePath;
@@ -97,11 +98,13 @@ public abstract class TreeAction extends AnAction {
     }
 
     @Override
-    public void actionPerformed(AnActionEvent anActionEvent) {
+    public void actionPerformed(@NotNull AnActionEvent anActionEvent) {
         Tree tree = getTree(anActionEvent);
-        TreePath[] selectedPaths = tree.getSelectionModel().getSelectionPaths();
-        Object[] selected = getSelectedNodes(tree);
-        actionPerformed(anActionEvent, selectedPaths, selected);
+        if (tree != null) {
+            TreePath[] selectedPaths = tree.getSelectionModel().getSelectionPaths();
+            Object[] selected = getSelectedNodes(tree);
+            actionPerformed(anActionEvent, selectedPaths, selected);
+        }
     }
 
     public abstract void actionPerformed(AnActionEvent anActionEvent, TreePath path, Object selected);
