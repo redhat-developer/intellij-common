@@ -74,7 +74,7 @@ public abstract class TreeAction extends AnAction {
         if (comp != null) {
             visible = isVisible(getSelectedNodes((Tree) comp));
         }
-        e.getPresentation().setVisible(visible);
+        e.getPresentation().setEnabledAndVisible(visible);
     }
 
     public boolean isVisible(Object selected) {
