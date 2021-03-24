@@ -8,7 +8,7 @@
  * Contributors:
  * Red Hat, Inc.
  ******************************************************************************/
-package com.redhat.devtools.intellij.common.listener;
+package com.redhat.devtools.intellij.common.editor;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
