@@ -123,8 +123,8 @@ public class ConfigHelper {
      *     <li>extensions</li>
      * </ul>
      *
-     * @param thisContext
-     * @param thatContext
+     * @param thisContext the fist context to compare
+     * @param thatContext the second context to compare
      * @return true if both contexts are equal
      *
      * @see NamedContext

@@ -38,7 +38,10 @@ public class HighSensitivityRegistrar {
 	}
 
 	/**
-	 * for testing purposes
+	 * Returns {@code true} if the current this is running on is MacOS. Returns {@code false} otherwise.
+	 * Method could be private but is kept protected for testing purposes.
+	 *
+	 * @return true if the current system is MacOS
 	 **/
 	protected boolean isMac() {
 		return SystemInfo.isMac;
@@ -52,7 +55,7 @@ public class HighSensitivityRegistrar {
 	 * Returns the SensitivityWatchEventModifier#HIGH if it exists (on sun jvms or
 	 * openjdk), {@code null} otherwise.
 	 *
-	 * @return
+	 * @return SensitivityWatchEventModifier#HIGH if it exists
 	 */
 	public Modifier get() {
 		try {
@@ -74,7 +77,11 @@ public class HighSensitivityRegistrar {
 	}
 
 	/**
-	 * for testing purposes
+	 * Returns the class SensitivityWatchEventModifier if it exists. Throws ClassNotFoundException if it was not found.
+	 * Method could be private, is kept protected for testing purposes.
+	 *
+	 * @return SensitivityWatchEventModifier if it was found
+	 * @throws ClassNotFoundException if the modifier class could not be found
 	 **/
 	protected Class<Modifier> getSensitivityWatchEventModifierClass() throws ClassNotFoundException {
 		return (Class<Modifier>) Class.forName(QUALIFIED_CLASSNAME);
