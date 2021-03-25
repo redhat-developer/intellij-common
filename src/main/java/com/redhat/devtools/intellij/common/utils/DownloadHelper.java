@@ -116,7 +116,7 @@ public class DownloadHelper {
          * @param toolName the name of the tool to download
          * @param url the URL to the tool description file
          * @return the command path
-         * @throws IOException
+         * @throws IOException if the tool was not found in the config file
          */
     public String downloadIfRequired(String toolName, URL url) throws IOException {
         ToolsConfig config = ConfigHelper.loadToolsConfig(url);

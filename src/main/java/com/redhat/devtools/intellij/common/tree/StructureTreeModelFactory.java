@@ -25,10 +25,10 @@ public class StructureTreeModelFactory {
 	 * @param structure the structure to associate
 	 * @param project   the IJ project
 	 * @return the build model
-	 * @throws IllegalAccessException
-	 * @throws InvocationTargetException
-	 * @throws InstantiationException
-	 * @throws NoSuchMethodException
+	 * @throws IllegalAccessException if the model class could not be loaded
+	 * @throws InvocationTargetException if the model class could not be loaded
+	 * @throws InstantiationException if the model could not be instantiated
+	 * @throws NoSuchMethodException if the model class could not be loaded
 	 */
 	public static StructureTreeModel<AbstractTreeStructure> create(AbstractTreeStructure structure, Project project)
 			throws IllegalAccessException, InvocationTargetException, InstantiationException, NoSuchMethodException {
