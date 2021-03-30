@@ -84,6 +84,7 @@ public class ConfigWatcher implements Runnable {
         HighSensitivityRegistrar modifier = new HighSensitivityRegistrar();
         modifier.registerService(getWatchedPath(),
                 new WatchEvent.Kind[]{
+                        StandardWatchEventKinds.ENTRY_CREATE,
                         StandardWatchEventKinds.ENTRY_MODIFY,
                         StandardWatchEventKinds.ENTRY_DELETE},
                 service);
