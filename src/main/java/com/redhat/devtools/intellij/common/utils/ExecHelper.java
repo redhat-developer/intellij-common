@@ -64,9 +64,9 @@ public class ExecHelper {
   }
 
   /**
-   * @deprecated As it combines and returns out and err streams, use {@link #executeWithResult(String, boolean, File, Map, String...)} instead
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
    */
-  @Deprecated
   public static String execute(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
                                String... arguments) throws IOException {
     DefaultExecutor executor = new DefaultExecutor() {
@@ -94,33 +94,50 @@ public class ExecHelper {
     }
   }
 
-  @Deprecated
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   */
   public static String execute(String executable, File workingDirectory, Map<String, String> envs, String... arguments) throws IOException {
     return execute(executable, true, workingDirectory, envs, arguments);
   }
 
-  @Deprecated
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   */
   public static String execute(String executable, Map<String, String> envs, String... arguments) throws IOException {
     return execute(executable, true, new File(HOME_FOLDER), envs, arguments);
   }
-
-  @Deprecated
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   */
   public static String execute(String executable, String... arguments) throws IOException {
     return execute(executable, Collections.emptyMap(), arguments);
   }
 
-  @Deprecated
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   */
   public static String execute(String executable, File workingDirectory, String... arguments) throws IOException {
     return execute(executable, true, workingDirectory, Collections.emptyMap(), arguments);
   }
 
-  @Deprecated
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   */
   public static String execute(String executable, boolean checkExitCode, Map<String, String> envs,
                                String... arguments) throws IOException {
     return execute(executable, checkExitCode, new File(HOME_FOLDER), envs, arguments);
   }
 
-  @Deprecated
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   */
   public static String execute(String executable, boolean checkExitCode, String... arguments) throws IOException {
     return execute(executable, checkExitCode, new File(HOME_FOLDER), Collections.emptyMap(), arguments);
   }
