@@ -15,7 +15,6 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.jediterm.terminal.ProcessTtyConnector;
@@ -64,6 +63,10 @@ public class ExecHelper {
     SERVICE.submit(runnable);
   }
 
+  /**
+   * @deprecated As it combines and returns out and err streams, use {@link #executeWithResult(String, boolean, File, Map, String...)} instead
+   */
+  @Deprecated
   public static String execute(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
                                String... arguments) throws IOException {
     DefaultExecutor executor = new DefaultExecutor() {
@@ -91,29 +94,91 @@ public class ExecHelper {
     }
   }
 
+  @Deprecated
   public static String execute(String executable, File workingDirectory, Map<String, String> envs, String... arguments) throws IOException {
     return execute(executable, true, workingDirectory, envs, arguments);
   }
 
+  @Deprecated
   public static String execute(String executable, Map<String, String> envs, String... arguments) throws IOException {
     return execute(executable, true, new File(HOME_FOLDER), envs, arguments);
   }
 
+  @Deprecated
   public static String execute(String executable, String... arguments) throws IOException {
     return execute(executable, Collections.emptyMap(), arguments);
   }
 
+  @Deprecated
   public static String execute(String executable, File workingDirectory, String... arguments) throws IOException {
     return execute(executable, true, workingDirectory, Collections.emptyMap(), arguments);
   }
 
+  @Deprecated
   public static String execute(String executable, boolean checkExitCode, Map<String, String> envs,
                                String... arguments) throws IOException {
     return execute(executable, checkExitCode, new File(HOME_FOLDER), envs, arguments);
   }
 
+  @Deprecated
   public static String execute(String executable, boolean checkExitCode, String... arguments) throws IOException {
     return execute(executable, checkExitCode, new File(HOME_FOLDER), Collections.emptyMap(), arguments);
+  }
+
+  public static ExecResult executeWithResult(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
+                                             String... arguments) throws IOException {
+    DefaultExecutor executor = new DefaultExecutor() {
+      @Override
+      public boolean isFailure(int exitValue) {
+        if (checkExitCode) {
+          return super.isFailure(exitValue);
+        } else {
+          return false;
+        }
+      }
+    };
+    StringWriter outWriter = new StringWriter();
+    StringWriter errWriter = new StringWriter();
+    PumpStreamHandler handler = new PumpStreamHandler(new WriterOutputStream(outWriter), new WriterOutputStream(errWriter));
+    executor.setStreamHandler(handler);
+    executor.setWorkingDirectory(workingDirectory);
+    CommandLine command = new CommandLine(executable).addArguments(arguments, false);
+    Map<String, String> env = new HashMap<>(System.getenv());
+    env.putAll(envs);
+    try {
+      int exitCode = executor.execute(command, env);
+      return new ExecResult(outWriter.toString(), errWriter.toString(), exitCode);
+    } catch (IOException e) {
+      throw new IOException(e.getLocalizedMessage() + " " + errWriter.toString(), e);
+    }
+  }
+
+  public static ExecResult executeWithResult(String executable, Map<String, String> envs, String... arguments) throws IOException {
+    return executeWithResult(executable, true, new File(HOME_FOLDER), envs, arguments);
+  }
+
+  public static class ExecResult {
+    private final String stdOut;
+    private final @Nullable String stdErr;
+    private final int exitCode;
+
+    public ExecResult(String stdOut, @Nullable String stdErr, int exitCode) {
+      this.stdOut = stdOut;
+      this.stdErr = stdErr;
+      this.exitCode = exitCode;
+    }
+
+    public String getStdOut() {
+      return stdOut;
+    }
+
+    public String getStdErr() {
+      return stdErr;
+    }
+
+    public int getExitCode() {
+      return exitCode;
+    }
   }
 
   private static class RedirectedStream extends FilterInputStream {
