@@ -230,6 +230,9 @@ public class ConfigHelper {
         if (authInfo == null) {
             return null;
         }
+        if (authInfo.getToken() != null) {
+            return authInfo.getToken();
+        }
         AuthProviderConfig authProviderConfig = authInfo.getAuthProvider();
         if (authProviderConfig == null) {
             return null;
