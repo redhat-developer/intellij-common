@@ -333,7 +333,7 @@ public class ExecHelper {
   private static AbstractTerminalRunner createTerminalRunner(Project project, Process process, String title) {
     AbstractTerminalRunner runner = new AbstractTerminalRunner(project) {
       @Override
-      protected Process createProcess(@Nullable String s) {
+      public Process createProcess(@Nullable String s) {
         return process;
       }
 
