@@ -15,4 +15,15 @@ public class StringHelper {
     public static String beautify(String text) {
         return text.length() > 16 ? text.substring(0, 16) + ".." : text;
     }
+
+    public static String getPlural(String kind) {
+        kind = kind.toLowerCase();
+        if (kind.endsWith("s")) {
+            return kind + "es";
+        } else if (kind.endsWith("y")) {
+            return kind.substring(0, kind.length() - 1) + "ies";
+        } else {
+            return kind + "s";
+        }
+    }
 }
