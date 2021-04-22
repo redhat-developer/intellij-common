@@ -43,9 +43,28 @@ public class GenericResourceDeserializerTest {
     }
 
     @Test
+    public void Convert_ResourceHasNullName_Throws() {
+        try {
+            String yaml = load("resource_with_null_name.yaml");
+            mapper.readValue(yaml, GenericResource.class);
+        } catch (IOException e) {
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The name is missing or invalid."));
+        }
+    }
+
+    @Test
     public void Convert_ResourceHasNoKind_Throws() {
         try {
             mapper.readValue(load("resource_without_kind.yaml"), GenericResource.class);
+        } catch (IOException e) {
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The kind is missing or invalid."));
+        }
+    }
+
+    @Test
+    public void Convert_ResourceHasNullKind_Throws() {
+        try {
+            mapper.readValue(load("resource_with_null_kind.yaml"), GenericResource.class);
         } catch (IOException e) {
             assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The kind is missing or invalid."));
         }
@@ -61,6 +80,15 @@ public class GenericResourceDeserializerTest {
     }
 
     @Test
+    public void Convert_ResourceHasNullApiVersion_Throws() {
+        try {
+            mapper.readValue(load("resource_with_null_apiversion.yaml"), GenericResource.class);
+        } catch (IOException e) {
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. ApiVersion is missing or invalid."));
+        }
+    }
+
+    @Test
     public void Convert_ResourceHasNoMetadataSection_Throws() {
         try {
             mapper.readValue(load("resource_without_metadata.yaml"), GenericResource.class);
@@ -70,9 +98,27 @@ public class GenericResourceDeserializerTest {
     }
 
     @Test
+    public void Convert_ResourceHasNullMetadataSection_Throws() {
+        try {
+            mapper.readValue(load("resource_with_null_metadata.yaml"), GenericResource.class);
+        } catch (IOException e) {
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Metadata field is missing or invalid."));
+        }
+    }
+
+    @Test
     public void Convert_ResourceHasNoSpec_Throws() {
         try {
             mapper.readValue(load("resource_without_spec.yaml"), GenericResource.class);
+        } catch (IOException e) {
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Spec field is missing or invalid."));
+        }
+    }
+
+    @Test
+    public void Convert_ResourceHasNullSpec_Throws() {
+        try {
+            mapper.readValue(load("resource_with_null_spec.yaml"), GenericResource.class);
         } catch (IOException e) {
             assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Spec field is missing or invalid."));
         }

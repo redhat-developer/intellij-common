@@ -22,22 +22,22 @@ public class GenericResourceDeserializer extends StdNodeBasedDeserializer<Generi
 
     @Override
     public GenericResource convert(JsonNode root, DeserializationContext ctxt) throws JsonMappingException {
-        if (!root.has("apiVersion") || root.get("apiVersion").asText().isEmpty()) {
+        if (!root.has("apiVersion") || !root.hasNonNull("apiVersion")) {
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. ApiVersion is missing or invalid.");
         }
-        if (!root.has("kind") || root.get("kind").asText().isEmpty()) {
+        if (!root.has("kind") || !root.hasNonNull("kind")) {
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. The kind is missing or invalid.");
         }
-        if (!root.has("metadata")) {
+        if (!root.has("metadata") || !root.hasNonNull("metadata")) {
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. Metadata field is missing or invalid.");
         }
         JsonNode metadata = root.get("metadata");
-        if ((!metadata.has("name") || metadata.get("name").asText().isEmpty())
-                && (!metadata.has("generateName") || metadata.get("generateName").asText().isEmpty())) {
+        if ((!metadata.has("name") || !metadata.hasNonNull("name"))
+                && (!metadata.has("generateName") || !metadata.hasNonNull("generateName"))) {
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. The name is missing or invalid.");
         }
 
-        if (!root.has("spec")) {
+        if (!root.has("spec") || !root.hasNonNull("spec")) {
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. Spec field is missing or invalid.");
         }
         return new GenericResource(root.get("apiVersion").asText(), root.get("kind").asText(), metadata, root.get("spec"));
