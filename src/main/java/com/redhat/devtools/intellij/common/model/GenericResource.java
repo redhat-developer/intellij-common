@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
         using = GenericResourceDeserializer.class
 )
 public class GenericResource {
-    private String apiVersion, kind, name;
+    private String apiVersion, kind;
     private JsonNode metadata, spec;
 
     public GenericResource() {}
@@ -25,7 +25,6 @@ public class GenericResource {
     public GenericResource(String apiVersion, String kind, JsonNode metadata, JsonNode spec) {
         this.apiVersion = apiVersion;
         this.kind = kind;
-        this.name = metadata.has("name") ? metadata.get("name").asText() : "";
         this.metadata = metadata;
         this.spec = spec;
     }
@@ -47,11 +46,10 @@ public class GenericResource {
     }
 
     public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
+        if (metadata.has("name")) {
+            return metadata.get("name").asText();
+        }
+        return metadata.get("generateName").asText();
     }
 
     public JsonNode getMetadata() {

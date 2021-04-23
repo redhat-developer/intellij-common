@@ -26,7 +26,7 @@ public class GenericResourceDeserializer extends StdNodeBasedDeserializer<Generi
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. ApiVersion is missing or invalid.");
         }
         if (!root.has("kind") || !root.hasNonNull("kind")) {
-            throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. The kind is missing or invalid.");
+            throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. Resource kind is missing or invalid.");
         }
         if (!root.has("metadata") || !root.hasNonNull("metadata")) {
             throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. Metadata field is missing or invalid.");
@@ -34,7 +34,7 @@ public class GenericResourceDeserializer extends StdNodeBasedDeserializer<Generi
         JsonNode metadata = root.get("metadata");
         if ((!metadata.has("name") || !metadata.hasNonNull("name"))
                 && (!metadata.has("generateName") || !metadata.hasNonNull("generateName"))) {
-            throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. The name is missing or invalid.");
+            throw new JsonMappingException(ctxt.getParser(), "Resource configuration not valid. Resource name is missing or invalid.");
         }
 
         if (!root.has("spec") || !root.hasNonNull("spec")) {
