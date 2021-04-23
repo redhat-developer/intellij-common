@@ -38,7 +38,7 @@ public class GenericResourceDeserializerTest {
             String yaml = load("resource_without_name.yaml");
             mapper.readValue(yaml, GenericResource.class);
         } catch (IOException e) {
-            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The name is missing or invalid."));
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Resource name is missing or invalid."));
         }
     }
 
@@ -48,7 +48,7 @@ public class GenericResourceDeserializerTest {
             String yaml = load("resource_with_null_name.yaml");
             mapper.readValue(yaml, GenericResource.class);
         } catch (IOException e) {
-            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The name is missing or invalid."));
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Resource name is missing or invalid."));
         }
     }
 
@@ -57,7 +57,7 @@ public class GenericResourceDeserializerTest {
         try {
             mapper.readValue(load("resource_without_kind.yaml"), GenericResource.class);
         } catch (IOException e) {
-            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The kind is missing or invalid."));
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Resource kind is missing or invalid."));
         }
     }
 
@@ -66,7 +66,7 @@ public class GenericResourceDeserializerTest {
         try {
             mapper.readValue(load("resource_with_null_kind.yaml"), GenericResource.class);
         } catch (IOException e) {
-            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. The kind is missing or invalid."));
+            assertTrue(e.getLocalizedMessage().contains("Resource configuration not valid. Resource kind is missing or invalid."));
         }
     }
 
