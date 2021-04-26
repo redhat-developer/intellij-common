@@ -14,13 +14,21 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.Icon;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
+
+    public static final Pattern HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>");
+
+    public static final SimpleTextAttributes LINK_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_UNDERLINE | SimpleTextAttributes.STYLE_CLICKABLE, JBColor.blue);
 
     private final T element;
     private final Supplier<String> label;
@@ -53,12 +61,35 @@ public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
 
     @Override
     protected void update(@NotNull PresentationData presentation) {
-        presentation.setPresentableText(label.get());
+        processLabel(presentation);
         if (location != null && location.get() != null) {
             presentation.setLocationString(location.get());
         }
         if (nodeIcon != null && nodeIcon.get() != null) {
             presentation.setIcon(nodeIcon.get());
+        }
+    }
+
+    private void processLabel(@NotNull PresentationData presentation) {
+        String text = label.get();
+        Matcher matcher = HREF_PATTERN.matcher(text);
+        if (matcher.find()) {
+            int prev = 0;
+            do {
+                if (matcher.start() != prev) {
+                    presentation.addText(text.substring(prev, matcher.start()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+                }
+                presentation.addText(matcher.group(2), LINK_ATTRIBUTES);
+                prev = matcher.end();
+            }
+            while (matcher.find());
+
+            if (prev < text.length()) {
+                presentation.addText(text.substring(prev), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+            }
+
+        } else {
+            presentation.setPresentableText(label.get());
         }
     }
 
