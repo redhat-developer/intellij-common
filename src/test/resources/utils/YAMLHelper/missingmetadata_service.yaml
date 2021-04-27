@@ -1,0 +1,11 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+spec:
+  template:
+    spec:
+      containers:
+        - image: "image"
+          name: "first"
+          env:
+            - name: TARGET
+              value: "Sample"
