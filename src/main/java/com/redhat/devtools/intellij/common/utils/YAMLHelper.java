@@ -50,6 +50,10 @@ public class YAMLHelper {
         return new YAMLMapper().configure(WRITE_DOC_START_MARKER, false).writeValueAsString(json);
     }
 
+    public static JsonNode YAMLToJsonNode(String yaml) throws IOException {
+        return YAML_MAPPER.readTree(yaml);
+    }
+
     public static JsonNode URLToJSON(URL file) throws IOException {
         if (file == null) {
             return null;
@@ -98,5 +102,62 @@ public class YAMLHelper {
 
             return node;
         }
+    }
+
+    /**
+     * Add a label to resource metadata
+     *
+     * @param yaml the YAML resource configuration
+     * @param labelKey label key to add
+     * @param labelValue label value to add
+     * @return The updated resource with the new label in the metadata
+     * @throws IOException if errored during yaml parsing
+     */
+    public static JsonNode addLabelToResource(String yaml, String labelKey, String labelValue) throws IOException {
+        ObjectNode resource = (ObjectNode) YAMLToJsonNode(yaml);
+        ObjectNode metadata;
+        if (!resource.has("metadata")) {
+            metadata = YAML_MAPPER.createObjectNode();
+        } else {
+            metadata = (ObjectNode) resource.get("metadata");
+        }
+
+        if (!metadata.has("labels")) {
+            ObjectNode newLabel = YAML_MAPPER.createObjectNode();
+            newLabel.put(labelKey, labelValue);
+            metadata.set("labels", newLabel);
+        } else if (!metadata.get("labels").has(labelKey)) {
+            ((ObjectNode)metadata.get("labels")).put(labelKey, labelValue);
+        }
+
+        resource.set("metadata", metadata);
+        return resource;
+    }
+
+    /**
+     * Remove a label from resource metadata
+     * @param yaml the YAML resource configuration
+     * @param labelKey label key to remove
+     * @return the updated resource with the label removed
+     * @throws IOException if errored during yaml parsing
+     */
+    public static JsonNode removeLabelFromResource(String yaml, String labelKey) throws IOException {
+        ObjectNode resource = (ObjectNode) YAMLToJsonNode(yaml);
+        ObjectNode metadata;
+        if (!resource.has("metadata")) {
+            metadata = YAML_MAPPER.createObjectNode();
+        } else {
+            metadata = (ObjectNode) resource.get("metadata");
+        }
+
+        if (metadata.has("labels") && metadata.get("labels").has(labelKey)) {
+            ((ObjectNode) metadata.get("labels")).remove(labelKey);
+            if (metadata.get("labels").size() == 0) {
+                metadata.remove("labels");
+            }
+        }
+
+        resource.set("metadata", metadata);
+        return resource;
     }
 }
