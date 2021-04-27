@@ -22,6 +22,7 @@ import com.jediterm.terminal.TtyConnector;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
@@ -55,8 +56,8 @@ import static com.redhat.devtools.intellij.common.CommonConstants.HOME_FOLDER;
 public class ExecHelper {
   private static final ScheduledExecutorService SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
-  public static void executeAfter(Runnable runnable, long delay, TimeUnit unit) {
-    SERVICE.schedule(runnable, delay, unit);
+  public static ScheduledFuture<?> executeAfter(Runnable runnable, long delay, TimeUnit unit) {
+    return SERVICE.schedule(runnable, delay, unit);
   }
 
   public static void submit(Runnable runnable) {
