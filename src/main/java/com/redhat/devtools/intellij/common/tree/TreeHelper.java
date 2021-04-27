@@ -33,7 +33,7 @@ public class TreeHelper {
             public void mouseClicked(MouseEvent e) {
                 TreePath path = getPathForLocation(tree, e.getX(), e.getY());
                 Object object = TreeUtil.getLastUserObject(path);
-                if (object instanceof NodeDescriptor) {
+                if (!(object instanceof LinkElement) && object instanceof NodeDescriptor) {
                     object = ((NodeDescriptor<?>) object).getElement();
                 }
                 if (object instanceof LinkElement) {
