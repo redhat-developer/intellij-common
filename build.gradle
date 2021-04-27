@@ -21,6 +21,9 @@ intellij {
     plugins 'terminal', 'yaml'
 }
 
+sourceCompatibility = '1.8'
+targetCompatibility = '1.8'
+
 java {
     withSourcesJar()
     withJavadocJar()
