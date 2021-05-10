@@ -67,6 +67,14 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   *
+   * @param executable the executable
+   * @param checkExitCode if exit code should be checked
+   * @param workingDirectory the working directory for the process
+   * @param envs the map for the environment variables
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
                                String... arguments) throws IOException {
@@ -98,6 +106,12 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   * @param executable the executable
+   * @param workingDirectory the working directory for the process
+   * @param envs the map for the environment variables
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, File workingDirectory, Map<String, String> envs, String... arguments) throws IOException {
     return execute(executable, true, workingDirectory, envs, arguments);
@@ -106,6 +120,11 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   * @param executable the executable
+   * @param envs the map for the environment variables
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, Map<String, String> envs, String... arguments) throws IOException {
     return execute(executable, true, new File(HOME_FOLDER), envs, arguments);
@@ -113,6 +132,10 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   * @param executable the executable
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, String... arguments) throws IOException {
     return execute(executable, Collections.emptyMap(), arguments);
@@ -121,6 +144,11 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   * @param executable the executable
+   * @param workingDirectory the working directory for the process
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, File workingDirectory, String... arguments) throws IOException {
     return execute(executable, true, workingDirectory, Collections.emptyMap(), arguments);
@@ -129,6 +157,12 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   * @param executable the executable
+   * @param checkExitCode if exit code should be checked
+   * @param envs the map for the environment variables
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, boolean checkExitCode, Map<String, String> envs,
                                String... arguments) throws IOException {
@@ -138,6 +172,11 @@ public class ExecHelper {
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   * @param executable the executable
+   * @param checkExitCode if exit code should be checked
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
    */
   public static String execute(String executable, boolean checkExitCode, String... arguments) throws IOException {
     return execute(executable, checkExitCode, new File(HOME_FOLDER), Collections.emptyMap(), arguments);
