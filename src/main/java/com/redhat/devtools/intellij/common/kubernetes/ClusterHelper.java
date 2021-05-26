@@ -23,7 +23,8 @@ public class ClusterHelper {
         if (client.isAdaptable(OpenShiftClient.class)) {
             OpenShiftClient oclient = client.adapt(OpenShiftClient.class);
             VersionInfo oVersion = oclient.getVersion();
-            return new ClusterInfo(client.getVersion().getGitVersion(), true, oVersion!=null? assemble(oVersion.getMajor(), oVersion.getMinor()) : "");
+            return new ClusterInfo(client.getVersion().getGitVersion(), true,
+                    oVersion != null && oVersion.getMajor() != null? assemble(oVersion.getMajor(), oVersion.getMinor()) : "");
         } else {
             return new ClusterInfo(client.getVersion().getGitVersion(), false, "");
         }
