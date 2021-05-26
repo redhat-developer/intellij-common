@@ -69,12 +69,33 @@ public abstract class TreeAction extends AnAction {
     @Override
     public void update(AnActionEvent e) {
         boolean visible = false;
+        boolean enabled = false;
         Component comp = getTree(e);
 
         if (comp != null) {
-            visible = isVisible(getSelectedNodes((Tree) comp));
+            Object[] selected = getSelectedNodes((Tree) comp);
+            visible = isVisible(selected);
+            enabled = isEnabled(selected);
         }
-        e.getPresentation().setEnabledAndVisible(visible);
+        e.getPresentation().setVisible(visible);
+        if (visible) {
+            e.getPresentation().setEnabled(enabled);
+        }
+    }
+
+    public boolean isEnabled(Object selected) {
+        return true;
+    }
+
+    public boolean isEnabled(Object[] selected) {
+        for (Object item : selected) {
+            Object adjusted = adjust(item);
+            if (adjusted == null
+                    || !isEnabled(adjusted)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean isVisible(Object selected) {
