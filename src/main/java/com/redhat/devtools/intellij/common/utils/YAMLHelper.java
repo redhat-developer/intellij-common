@@ -38,9 +38,22 @@ public class YAMLHelper {
     public static JsonNode getValueFromYAML(String yamlAsString, String[] fieldnames) throws IOException {
         if (yamlAsString == null) return null;
         JsonNode node = YAML_MAPPER.readTree(yamlAsString);
+        Pattern arrayPattern = Pattern.compile("(\\w+)(\\[(\\d)\\])*");
         for (String fieldname: fieldnames) {
-            if (!node.has(fieldname)) return null;
+            int index = -1;
+            Matcher match = arrayPattern.matcher(fieldname);
+            if (match.matches() && match.group(3) != null) {
+                fieldname = match.group(1);
+                index = Integer.parseInt(match.group(3));
+            }
+            if (!node.has(fieldname) ||
+                    (index != -1 && !node.get(fieldname).has(index))) {
+                return null;
+            }
             node = node.get(fieldname);
+            if (index != -1) {
+                node = node.get(index);
+            }
         }
         return node;
     }
