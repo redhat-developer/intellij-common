@@ -19,6 +19,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class YAMLHelperTest {
@@ -148,6 +149,62 @@ public class YAMLHelperTest {
         assertEquals("test", metadata.get("name").asText());
         assertFalse(metadata.has("labels"));
         assertTrue(YAMLHelper.YAMLToJsonNode(yaml).get("metadata").get("labels").has(LABEL_KEY));
+    }
+
+    @Test
+    public void GetStringValueFromYAML_YAMLHasNoField_Null() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        String result = YAMLHelper.getStringValueFromYAML(yaml, new String[] { "fake" });
+        assertNull(result);
+    }
+
+    @Test
+    public void GetStringValueFromYAML_YAMLHasField_Value() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        String result = YAMLHelper.getStringValueFromYAML(yaml, new String[] { "metadata", "name" });
+        assertEquals("test", result);
+    }
+
+    @Test
+    public void GetStringValueFromYAML_YAMLHasArrayField_ValuePerIndex() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        String result = YAMLHelper.getStringValueFromYAML(yaml, new String[] { "spec", "template", "spec", "containers[0]", "image" });
+        assertEquals("image", result);
+    }
+
+    @Test
+    public void GetStringValueFromYAML_YAMLHasArrayFieldAndIndexIsOutOfRange_Null() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        String result = YAMLHelper.getStringValueFromYAML(yaml, new String[] { "spec", "template", "spec", "containers[1]", "image" });
+        assertNull(result);
+    }
+
+    @Test
+    public void GetValueFromYAML_YAMLHasNoField_Null() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        JsonNode result = YAMLHelper.getValueFromYAML(yaml, new String[] { "fake" });
+        assertNull(result);
+    }
+
+    @Test
+    public void GetValueFromYAML_YAMLHasField_Value() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        JsonNode result = YAMLHelper.getValueFromYAML(yaml, new String[] { "metadata", "name" });
+        assertEquals("test", result.asText());
+    }
+
+    @Test
+    public void GetValueFromYAML_YAMLHasArrayField_ValuePerIndex() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        JsonNode result = YAMLHelper.getValueFromYAML(yaml, new String[] { "spec", "template", "spec", "containers[0]", "image" });
+        assertEquals("image", result.asText());
+    }
+
+    @Test
+    public void GetValueFromYAML_YAMLHasArrayFieldAndIndexIsOutOfRange_Null() throws IOException {
+        String yaml = load(RESOURCE_PATH + "service.yaml");
+        JsonNode result = YAMLHelper.getValueFromYAML(yaml, new String[] { "spec", "template", "spec", "containers[1]", "image" });
+        assertNull(result);
     }
 
     private String load(String name) throws IOException {
