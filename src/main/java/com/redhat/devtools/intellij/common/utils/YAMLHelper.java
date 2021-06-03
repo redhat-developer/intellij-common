@@ -29,28 +29,44 @@ public class YAMLHelper {
 
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
 
-    public static String getStringValueFromYAML(String yamlAsString, String[] fieldnames) throws IOException {
-        JsonNode nodeValue = YAMLHelper.getValueFromYAML(yamlAsString, fieldnames);
+    /**
+     * Retrieve value as String from YAML text
+     *
+     * @param yamlAsString Full YAML where to search the value from
+     * @param path Path to scan to search for the value (e.g to get the resource name `String[] { "metadata", "name" } `)
+     * @return last field value or null if the YAML doesn't contain any field
+     * @throws IOException if erroring during parsing
+     */
+    public static String getStringValueFromYAML(String yamlAsString, String[] path) throws IOException {
+        JsonNode nodeValue = YAMLHelper.getValueFromYAML(yamlAsString, path);
         if (nodeValue == null || !nodeValue.isTextual()) return null;
         return nodeValue.asText();
     }
 
-    public static JsonNode getValueFromYAML(String yamlAsString, String[] fieldnames) throws IOException {
+    /**
+     * Retrieve value as JsonNode from YAML text
+     *
+     * @param yamlAsString Full YAML where to search the value from
+     * @param path Path to scan to search for the value (e.g to get the resource name `String[] { "metadata", "name" } `)
+     * @return last field value or null if the YAML doesn't contain any field
+     * @throws IOException if erroring during parsing
+     */
+    public static JsonNode getValueFromYAML(String yamlAsString, String[] path) throws IOException {
         if (yamlAsString == null) return null;
         JsonNode node = YAML_MAPPER.readTree(yamlAsString);
         Pattern arrayPattern = Pattern.compile("(\\w+)(\\[(\\d)\\])*");
-        for (String fieldname: fieldnames) {
+        for (String field: path) {
             int index = -1;
-            Matcher match = arrayPattern.matcher(fieldname);
+            Matcher match = arrayPattern.matcher(field);
             if (match.matches() && match.group(3) != null) {
-                fieldname = match.group(1);
+                field = match.group(1);
                 index = Integer.parseInt(match.group(3));
             }
-            if (!node.has(fieldname) ||
-                    (index != -1 && !node.get(fieldname).has(index))) {
+            if (!node.has(field) ||
+                    (index != -1 && !node.get(field).has(index))) {
                 return null;
             }
-            node = node.get(fieldname);
+            node = node.get(field);
             if (index != -1) {
                 node = node.get(index);
             }
