@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.kubernetes;
 
+import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.openshift.client.OpenShiftClient;
@@ -21,7 +22,13 @@ public class ClusterHelper {
 
     public static ClusterInfo getClusterInfo(KubernetesClient client) {
         if (client.isAdaptable(OpenShiftClient.class)) {
-            OpenShiftClient oclient = client.adapt(OpenShiftClient.class);
+            OpenShiftClient oclient;
+            if (client instanceof OpenShiftClient) {
+                oclient = (OpenShiftClient) client;
+                client = new DefaultKubernetesClient(client.getConfiguration());
+            } else {
+                oclient = client.adapt(OpenShiftClient.class);
+            }
             VersionInfo oVersion = oclient.getVersion();
             return new ClusterInfo(client.getVersion().getGitVersion(), true,
                     oVersion != null && oVersion.getMajor() != null? assemble(oVersion.getMajor(), oVersion.getMinor()) : "");
