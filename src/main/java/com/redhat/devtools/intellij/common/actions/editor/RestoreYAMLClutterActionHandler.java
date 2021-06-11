@@ -12,12 +12,20 @@ package com.redhat.devtools.intellij.common.actions.editor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.redhat.devtools.intellij.common.utils.VirtualFileHelper;
 import com.redhat.devtools.intellij.common.utils.YAMLHelper;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+import static com.redhat.devtools.intellij.common.CommonConstants.metadataClutter;
 
 public class RestoreYAMLClutterActionHandler extends YAMLClutterActionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(RestoreYAMLClutterActionHandler.class);
+
     @Override
     public String getUpdatedContent(String originalContent, String currentContent) {
         return restoreYAMLClutter(originalContent, currentContent);
@@ -41,24 +49,12 @@ public class RestoreYAMLClutterActionHandler extends YAMLClutterActionHandler {
             if (currentContentMetadata == null) {
                 currentContentNode.set("metadata", originalContentMetadata);
             } else {
-                setMetadataFieldsValues(Arrays.asList(
-                        "clusterName",
-                        "creationTimestamp",
-                        "deletionGracePeriodSeconds",
-                        "deletionTimestamp",
-                        "finalizers",
-                        "generation",
-                        "managedFields",
-                        "ownerReferences",
-                        "resourceVersion",
-                        "selfLink",
-                        "uid"
-                ), originalContentMetadata, currentContentMetadata);
+                setMetadataFieldsValues(metadataClutter, originalContentMetadata, currentContentMetadata);
                 currentContentNode.set("metadata", currentContentMetadata);
             }
             currentContent = YAMLHelper.JSONToYAML(currentContentNode);
         } catch (IOException e) {
-
+            logger.warn(e.getLocalizedMessage(), e);
         }
         return currentContent;
     }

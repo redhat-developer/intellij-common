@@ -12,6 +12,8 @@ package com.redhat.devtools.intellij.common;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import java.util.Arrays;
+import java.util.List;
 
 public class CommonConstants {
     public static final String HOME_FOLDER = System.getProperty("user.home");
@@ -20,4 +22,18 @@ public class CommonConstants {
     public static final Key<Object> TARGET_NODE = Key.create("com.redhat.devtools.intellij.common.targetnode");
     public static final Key<String> CONTENT = Key.create("com.redhat.devtools.intellij.common.content");
     public static final Key<Boolean> CLEANED = Key.create("com.redhat.devtools.intellij.common.cleaned");
+
+    public static final List<String> metadataClutter = Arrays.asList(
+            "clusterName",
+            "creationTimestamp",
+            "deletionGracePeriodSeconds",
+            "deletionTimestamp",
+            "finalizers",
+            "generation",
+            "managedFields",
+            "ownerReferences",
+            "resourceVersion",
+            "selfLink",
+            "uid"
+    );
 }

@@ -20,12 +20,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import java.io.IOException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 import static com.redhat.devtools.intellij.common.CommonConstants.CLEANED;
 import static com.redhat.devtools.intellij.common.CommonConstants.CONTENT;
 
 public abstract class YAMLClutterActionHandler extends EditorWriteActionHandler {
+    private static final Logger logger = LoggerFactory.getLogger(RestoreYAMLClutterActionHandler.class);
 
     @Override
     public void executeWriteAction(Editor editor, @Nullable Caret caret, DataContext dataContext) {
@@ -47,6 +50,7 @@ public abstract class YAMLClutterActionHandler extends EditorWriteActionHandler 
             vf.setWritable(isWritable);
             editor.getDocument().setReadOnly(!isWritable);
         } catch (IOException e) {
+            logger.warn(e.getLocalizedMessage(), e);
         }
     }
 

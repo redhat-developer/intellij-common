@@ -21,6 +21,9 @@ import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
+import static com.redhat.devtools.intellij.common.CommonConstants.metadataClutter;
+
 public class VirtualFileHelper {
     private static final Logger logger = LoggerFactory.getLogger(VirtualFileHelper.class);
 
@@ -44,19 +47,7 @@ public class VirtualFileHelper {
             ObjectNode contentNode = (ObjectNode) YAMLHelper.YAMLToJsonNode(content);
             ObjectNode metadata = contentNode.has("metadata") ? (ObjectNode) contentNode.get("metadata") : null;
             if (metadata != null) {
-                metadata.remove(Arrays.asList(
-                        "clusterName",
-                        "creationTimestamp",
-                        "deletionGracePeriodSeconds",
-                        "deletionTimestamp",
-                        "finalizers",
-                        "generation",
-                        "managedFields",
-                        "ownerReferences",
-                        "resourceVersion",
-                        "selfLink",
-                        "uid"
-                ));
+                metadata.remove(metadataClutter);
                 contentNode.set("metadata", metadata);
                 content = YAMLHelper.JSONToYAML(contentNode);
             }
