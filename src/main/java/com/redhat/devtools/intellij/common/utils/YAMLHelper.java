@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.IOException;
@@ -74,9 +75,16 @@ public class YAMLHelper {
         return node;
     }
 
-    public static String JSONToYAML(JsonNode json) throws JsonProcessingException {
+    public static String JSONToYAML(JsonNode json) throws IOException {
         if (json == null) return "";
-        return new YAMLMapper().configure(WRITE_DOC_START_MARKER, false).writeValueAsString(json);
+        try {
+            return new YAMLMapper()
+                    .configure(WRITE_DOC_START_MARKER, false)
+                    .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
+                    .writeValueAsString(json);
+        } catch (JsonProcessingException e) {
+            throw new IOException(e);
+        }
     }
 
     public static JsonNode YAMLToJsonNode(String yaml) throws IOException {
