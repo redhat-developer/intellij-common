@@ -18,4 +18,6 @@ public class CommonConstants {
     public static final Key<Project> PROJECT = Key.create("com.redhat.devtools.intellij.common.project");
     public static final Key<Long> LAST_MODIFICATION_STAMP = Key.create("com.redhat.devtools.intellij.common.last.modification.stamp");
     public static final Key<Object> TARGET_NODE = Key.create("com.redhat.devtools.intellij.common.targetnode");
+    public static final Key<String> CONTENT = Key.create("com.redhat.devtools.intellij.common.content");
+    public static final Key<Boolean> CLEANED = Key.create("com.redhat.devtools.intellij.common.cleaned");
 }
