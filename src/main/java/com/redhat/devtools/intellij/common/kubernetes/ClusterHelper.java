@@ -21,7 +21,7 @@ public class ClusterHelper {
     }
 
     public static ClusterInfo getClusterInfo(KubernetesClient client) {
-        if (client.isAdaptable(OpenShiftClient.class)) {
+        if (client instanceof OpenShiftClient || client.isAdaptable(OpenShiftClient.class)) {
             OpenShiftClient oclient;
             if (client instanceof OpenShiftClient) {
                 oclient = (OpenShiftClient) client;
