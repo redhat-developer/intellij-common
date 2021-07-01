@@ -36,15 +36,15 @@ public abstract class YAMLClutterAction extends EditorAction {
         Presentation presentation = e.getPresentation();
         DataContext dataContext = e.getDataContext();
         Editor editor = getEditor(dataContext);
-        if (editor == null) {
-            presentation.setEnabled(false);
-            presentation.setVisible(false);
-        }
-        Document document = editor.getDocument();
-        VirtualFile vf = FileDocumentManager.getInstance().getFile(document);
         boolean isDisabled = true;
-        if (vf != null && vf.getUserData(CLEANED) != null) {
-            isDisabled = isDisabled(vf.getUserData(CLEANED));
+        if (editor != null) {
+            Document document = editor.getDocument();
+            if (document != null) {
+                VirtualFile vf = FileDocumentManager.getInstance().getFile(document);
+                if (vf != null && vf.getUserData(CLEANED) != null) {
+                    isDisabled = isDisabled(vf.getUserData(CLEANED));
+                }
+            }
         }
         if (isDisabled) {
             presentation.setEnabled(false);
