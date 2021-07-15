@@ -76,11 +76,15 @@ public class YAMLHelper {
     }
 
     public static String JSONToYAML(JsonNode json) throws IOException {
+        return JSONToYAML(json, true);
+    }
+
+    public static String JSONToYAML(JsonNode json, boolean minimizeQuotes) throws IOException {
         if (json == null) return "";
         try {
             return new YAMLMapper()
                     .configure(WRITE_DOC_START_MARKER, false)
-                    .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, true)
+                    .configure(YAMLGenerator.Feature.MINIMIZE_QUOTES, minimizeQuotes)
                     .writeValueAsString(json);
         } catch (JsonProcessingException e) {
             throw new IOException(e);
