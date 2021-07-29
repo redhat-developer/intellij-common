@@ -21,20 +21,6 @@ import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.concurrent.ScheduledFuture;
-import java.util.function.Consumer;
-import org.apache.commons.exec.CommandLine;
-import org.apache.commons.exec.DefaultExecutor;
-import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.commons.io.output.WriterOutputStream;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
-import org.jetbrains.plugins.terminal.TerminalView;
-
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -55,6 +41,17 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.output.WriterOutputStream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
+import org.jetbrains.plugins.terminal.TerminalView;
+
 
 import static com.redhat.devtools.intellij.common.CommonConstants.HOME_FOLDER;
 
@@ -423,7 +420,7 @@ public class ExecHelper {
    * @param project the IJ project
    */
   public static void ensureTerminalWindowsIsOpened(Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
+    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
     if (toolWindow != null) {
       ApplicationManager.getApplication().invokeAndWait(() -> toolWindow.show(null));
     }
@@ -498,6 +495,11 @@ public class ExecHelper {
 
   public static void executeWithTerminal(Project project, String title, String... command) throws IOException {
     executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), command);
+  }
+
+  public static void executeWithTerminalWidget(Project project, String... command) throws IOException {
+    ensureTerminalWindowsIsOpened(project);
+    TerminalView.getInstance(project).createLocalShellWidget(CommonConstants.HOME_FOLDER).executeCommand(String.join(" ", command));
   }
 
   public static void executeWithUI(Map<String, String> envs, Runnable initRunnable, Consumer<String> runnable, String... command) throws IOException {
