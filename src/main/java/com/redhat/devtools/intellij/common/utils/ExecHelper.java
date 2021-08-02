@@ -48,6 +48,7 @@ import org.apache.commons.io.output.WriterOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalView;
@@ -497,9 +498,34 @@ public class ExecHelper {
     executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), command);
   }
 
-  public static void executeWithTerminalWidget(Project project, String... command) throws IOException {
+  public static void executeWithTerminalWidget(Project project, String title, String... command) throws IOException {
+    executeWithTerminalWidgetInternal(project, HOME_FOLDER, title, command);
+  }
+
+  public static void executeWithTerminalWidgetInternal(Project project, String workingDirectory, String title, String... command) throws IOException {
     ensureTerminalWindowsIsOpened(project);
-    TerminalView.getInstance(project).createLocalShellWidget(CommonConstants.HOME_FOLDER).executeCommand(String.join(" ", command));
+
+    final TerminalView view = TerminalView.getInstance(project);
+    final Method[] method = new Method[1];
+    final Object[][] parameters = new Object[1][];
+    try {
+      method[0] = TerminalView.class.getMethod("createLocalShellWidget", new Class[] {String.class, String.class});
+      parameters[0] = new Object[] { workingDirectory, title };
+    } catch (NoSuchMethodException e) {
+      try {
+        method[0] = TerminalView.class.getMethod("createLocalShellWidget", new Class[] {String.class});
+        parameters[0] = new Object[] { workingDirectory };
+      } catch (NoSuchMethodException e1) {
+        throw new IOException(e1);
+      }
+    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        ShellTerminalWidget shellTerminalWidgets = (ShellTerminalWidget) method[0].invoke(view, parameters[0]);
+        shellTerminalWidgets.executeCommand(String.join(" ", command));
+      } catch (IllegalAccessException | InvocationTargetException | IOException ignored) {}
+    });
+
   }
 
   public static void executeWithUI(Map<String, String> envs, Runnable initRunnable, Consumer<String> runnable, String... command) throws IOException {
