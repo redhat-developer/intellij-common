@@ -15,7 +15,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.JTree;
@@ -31,11 +30,9 @@ public abstract class TreeDoubleClickListener extends DoubleClickListener {
         installOn(tree);
     }
 
-
     @Override
     protected boolean onDoubleClick(MouseEvent event) {
-        final TreePath clickPath = tree.getUI() instanceof WideSelectionTreeUI ? tree.getClosestPathForLocation(event.getX(), event.getY())
-                : tree.getPathForLocation(event.getX(), event.getY());
+        final TreePath clickPath = tree.getPathForLocation(event.getX(), event.getY());
         if (clickPath == null) {
             return false;
         }
