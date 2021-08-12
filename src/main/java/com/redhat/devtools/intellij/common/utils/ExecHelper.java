@@ -14,6 +14,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -41,6 +42,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
+
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
@@ -505,27 +508,41 @@ public class ExecHelper {
   public static void executeWithTerminalWidgetInternal(Project project, String workingDirectory, String title, String... command) throws IOException {
     ensureTerminalWindowsIsOpened(project);
 
-    final TerminalView view = TerminalView.getInstance(project);
-    final Method[] method = new Method[1];
-    final Object[][] parameters = new Object[1][];
-    try {
-      method[0] = TerminalView.class.getMethod("createLocalShellWidget", new Class[] {String.class, String.class});
-      parameters[0] = new Object[] { workingDirectory, title };
-    } catch (NoSuchMethodException e) {
-      try {
-        method[0] = TerminalView.class.getMethod("createLocalShellWidget", new Class[] {String.class});
-        parameters[0] = new Object[] { workingDirectory };
-      } catch (NoSuchMethodException e1) {
-        throw new IOException(e1);
-      }
-    }
     ApplicationManager.getApplication().invokeLater(() -> {
       try {
-        ShellTerminalWidget shellTerminalWidgets = (ShellTerminalWidget) method[0].invoke(view, parameters[0]);
-        shellTerminalWidgets.executeCommand(String.join(" ", command));
-      } catch (IllegalAccessException | InvocationTargetException | IOException ignored) {}
+        ShellTerminalWidget terminal = createTerminal(project, title, workingDirectory);
+        if (terminal == null) {
+          return;
+        }
+        terminal.executeCommand(String.join(" ", command));
+      } catch (IOException e) {
+        Logger.getInstance(ExecHelper.class).warn("Could execute " + command + " in local shell terminal widget", e);
+      }
     });
+  }
 
+  private static ShellTerminalWidget createTerminal(Project project, String title, String workingDirectory) throws IOException {
+    Method[] method = new Method[1];
+    Object[][] parameters = new Object[1][];
+    try {
+      method[0] = TerminalView.class.getMethod("createLocalShellWidget", String.class, String.class);
+      parameters[0] = new Object[]{workingDirectory, title};
+    } catch (NoSuchMethodException e) {
+      try {
+        method[0] = TerminalView.class.getMethod("createLocalShellWidget", String.class);
+        parameters[0] = new Object[] { workingDirectory };
+      } catch (NoSuchMethodException e1) {
+        Logger.getInstance(ExecHelper.class).warn("Could not create shell terminal widget", e);
+        return null;
+      }
+    }
+
+    try {
+      return (ShellTerminalWidget) method[0].invoke(TerminalView.getInstance(project), parameters[0]);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      Logger.getInstance(ExecHelper.class).warn("Could not create shell terminal widget", e);
+      return null;
+    }
   }
 
   public static void executeWithUI(Map<String, String> envs, Runnable initRunnable, Consumer<String> runnable, String... command) throws IOException {
