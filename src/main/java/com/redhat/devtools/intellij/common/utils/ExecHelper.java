@@ -27,17 +27,19 @@ import java.util.function.Consumer;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.xmlgraphics.util.WriterOutputStream;
+import org.apache.commons.io.output.WriterOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalView;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
@@ -49,7 +51,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static com.redhat.devtools.intellij.common.CommonConstants.HOME_FOLDER;
 
@@ -241,12 +245,10 @@ public class ExecHelper {
   private static class RedirectedStream extends FilterInputStream {
     private boolean emitLF = false;
     private final boolean redirect;
-    private final boolean delay;
 
-    private RedirectedStream(InputStream delegate, boolean redirect, boolean delay) {
+    private RedirectedStream(InputStream delegate, boolean redirect) {
       super(delegate);
       this.redirect = redirect;
-      this.delay = delay;
     }
 
     @Override
@@ -281,11 +283,6 @@ public class ExecHelper {
 
       int c = read();
       if (c == -1) {
-        if (delay) {
-          try {
-            Thread.sleep(60000L);
-          } catch (InterruptedException e) {}
-        }
         return -1;
       }
       b[off] = (byte)c;
@@ -307,9 +304,9 @@ public class ExecHelper {
     private final Process delegate;
     private final InputStream inputStream;
 
-    private RedirectedProcess(Process delegate, boolean redirect, boolean delay) {
+    private RedirectedProcess(Process delegate, boolean redirect) {
       this.delegate = delegate;
-      inputStream = new RedirectedStream(delegate.getInputStream(), redirect, delay) {};
+      inputStream = new RedirectedStream(delegate.getInputStream(), redirect) {};
     }
 
     @Override
@@ -431,7 +428,7 @@ public class ExecHelper {
       try {
         ensureTerminalWindowsIsOpened(project);
         boolean isPost2018_3 = ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 183;
-        final RedirectedProcess process = new RedirectedProcess(p, true, isPost2018_3);
+        final RedirectedProcess process = new RedirectedProcess(p, true);
         AbstractTerminalRunner runner = createTerminalRunner(project, process, title);
 
         TerminalOptionsProvider terminalOptions = ServiceManager.getService(TerminalOptionsProvider.class);
