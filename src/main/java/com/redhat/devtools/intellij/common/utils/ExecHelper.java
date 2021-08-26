@@ -44,6 +44,7 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,6 +60,8 @@ import static com.redhat.devtools.intellij.common.CommonConstants.HOME_FOLDER;
 
 public class ExecHelper {
   private static final ScheduledExecutorService SERVICE = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+  private ExecHelper() {}
 
   public static ScheduledFuture<?> executeAfter(Runnable runnable, long delay, TimeUnit unit) {
     return SERVICE.schedule(runnable, delay, unit);
@@ -93,7 +96,7 @@ public class ExecHelper {
       }
     };
     StringWriter writer = new StringWriter();
-    PumpStreamHandler handler = new PumpStreamHandler(new WriterOutputStream(writer));
+    PumpStreamHandler handler = new PumpStreamHandler(new WriterOutputStream(writer, Charset.defaultCharset()));
     executor.setStreamHandler(handler);
     executor.setWorkingDirectory(workingDirectory);
     CommandLine command = new CommandLine(executable).addArguments(arguments, false);
@@ -200,7 +203,9 @@ public class ExecHelper {
     };
     StringWriter outWriter = new StringWriter();
     StringWriter errWriter = new StringWriter();
-    PumpStreamHandler handler = new PumpStreamHandler(new WriterOutputStream(outWriter), new WriterOutputStream(errWriter));
+    PumpStreamHandler handler = new PumpStreamHandler(
+            new WriterOutputStream(outWriter, Charset.defaultCharset()),
+            new WriterOutputStream(errWriter, Charset.defaultCharset()));
     executor.setStreamHandler(handler);
     executor.setWorkingDirectory(workingDirectory);
     CommandLine command = new CommandLine(executable).addArguments(arguments, false);
@@ -515,7 +520,7 @@ public class ExecHelper {
       String line;
 
       try {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), "UTF-8"));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8));
         while ((line = reader.readLine()) != null) {
           sb.append(line).append("\n");
 
