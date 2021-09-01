@@ -10,8 +10,11 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.ide.ui.LafManager;
+import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ApplicationManager;
 
+import javax.swing.UIManager;
 import java.util.function.Supplier;
 
 public class UIHelper {
@@ -31,5 +34,10 @@ public class UIHelper {
       ApplicationManager.getApplication().invokeAndWait(() -> val[0] = supplier.get());
       return (T) val[0];
     }
+  }
+
+  public static boolean isDarkMode() {
+    UIManager.LookAndFeelInfo lafInfo = LafManager.getInstance().getCurrentLookAndFeel();
+    return lafInfo.getClassName().equals(DarculaLaf.class.getName());
   }
 }
