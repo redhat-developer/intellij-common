@@ -38,6 +38,6 @@ public class UIHelper {
 
   public static boolean isDarkMode() {
     UIManager.LookAndFeelInfo lafInfo = LafManager.getInstance().getCurrentLookAndFeel();
-    return lafInfo.getClassName().equals(DarculaLaf.class.getName());
+    return lafInfo != null && lafInfo.getClassName().equals(DarculaLaf.class.getName());
   }
 }
