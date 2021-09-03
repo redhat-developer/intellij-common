@@ -11,17 +11,31 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
+import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
+import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
 import com.redhat.devtools.intellij.common.CommonConstants;
+import com.redhat.devtools.intellij.common.utils.terminal.JCommonTerminalWidget;
+import java.awt.Dimension;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
 import org.apache.commons.exec.CommandLine;
@@ -31,7 +45,9 @@ import org.apache.xmlgraphics.util.WriterOutputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
+import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalTabState;
 import org.jetbrains.plugins.terminal.TerminalView;
 
 import java.io.File;
@@ -303,167 +319,81 @@ public class ExecHelper {
       return i;
     }
   }
-  private static class RedirectedProcess extends Process {
-    private final Process delegate;
-    private final InputStream inputStream;
 
-    private RedirectedProcess(Process delegate, boolean redirect, boolean delay) {
-      this.delegate = delegate;
-      inputStream = new RedirectedStream(delegate.getInputStream(), redirect, delay) {};
-    }
-
-    @Override
-    public OutputStream getOutputStream() {
-      return delegate.getOutputStream();
-    }
-
-    @Override
-    public InputStream getInputStream() {
-      return inputStream;
-    }
-
-    @Override
-    public InputStream getErrorStream() {
-      return delegate.getErrorStream();
-    }
-
-    @Override
-    public int waitFor() throws InterruptedException {
-      return delegate.waitFor();
-    }
-
-    @Override
-    public boolean waitFor(long timeout, TimeUnit unit) throws InterruptedException {
-      return delegate.waitFor(timeout, unit);
-    }
-
-    @Override
-    public int exitValue() {
-      return delegate.exitValue();
-    }
-
-    @Override
-    public void destroy() {
-      delegate.destroy();
-    }
-
-    @Override
-    public Process destroyForcibly() {
-      return delegate.destroyForcibly();
-    }
-
-    @Override
-    public boolean isAlive() {
-      return delegate.isAlive();
-    }
-  }
   private static void executeWithTerminalInternal(Project project, String title, File workingDirectory,
-                                                  boolean waitForProcessExit, Map<String, String> envs,
-                                                  String... command) throws IOException {
-    try {
-      ProcessBuilder builder = new ProcessBuilder(command).directory(workingDirectory).redirectErrorStream(true);
-      builder.environment().putAll(envs);
-      Process p = builder.start();
-      linkProcessToTerminal(p, project, title, waitForProcessExit);
-    } catch (IOException e) {
-      throw e;
-    }
+                                                  boolean readOnly, boolean keepTabOpened,
+                                                  Map<String, String> envs, String... command) throws IOException {
+    TerminalTabState terminalTabState = new TerminalTabState();
+    terminalTabState.myTabName = title;
+    terminalTabState.myWorkingDirectory = workingDirectory.getPath();
+
+    LocalTerminalDirectRunner runner = createTerminalRunner(project, readOnly, keepTabOpened, envs, command);
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      TerminalView.getInstance(project).createNewSession(runner, terminalTabState);
+    });
   }
 
-  private static AbstractTerminalRunner createTerminalRunner(Project project, Process process, String title) {
-    AbstractTerminalRunner runner = new AbstractTerminalRunner(project) {
-      @Override
-      public Process createProcess(@Nullable String s) {
-        return process;
+  private static LocalTerminalDirectRunner createTerminalRunner(Project project, boolean readOnly, boolean keepTabOpened, Map<String, String> customEnvs, String... command) {
+    Disposable disposable = Disposer.newDisposable();
+    LocalTerminalDirectRunner runner = new LocalTerminalDirectRunner(project) {
+      public String[] getCommand(Map<String, String> envs) {
+        envs.putAll(customEnvs);
+        return command;
       }
 
-      @Override
-      protected ProcessHandler createProcessHandler(Process process) {
-        return null;
+      public List<String> getInitialCommand(@NotNull Map<String, String> envs) {
+        envs.putAll(customEnvs);
+        return Arrays.asList(command);
       }
 
-      @Override
-      protected String getTerminalConnectionName(Process process) {
-        return null;
+      protected @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory, boolean deferSessionUntilFirstShown) {
+        JBTerminalWidget jbTerminalWidget = new JCommonTerminalWidget(project, new JBTerminalSystemSettingsProviderBase(), disposable, readOnly, keepTabOpened);
+        Runnable openSession = () -> openSessionInDirectory(jbTerminalWidget, currentWorkingDirectory.getPath());
+        if (deferSessionUntilFirstShown) {
+          UiNotifyConnector.doWhenFirstShown(jbTerminalWidget, openSession);
+        } else {
+          openSession.run();
+        }
+        return jbTerminalWidget;
       }
 
-      @Override
-      protected TtyConnector createTtyConnector(Process process) {
-        return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
-          @Override
-          protected void resizeImmediately() {
+      public void openSessionInDirectory(@NotNull JBTerminalWidget terminalWidget,
+                                         @Nullable String directory) {
+        ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
+        Dimension size = terminalWidget.getTerminalPanel().getTerminalSizeFromComponent();
+
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          try {
+            PtyProcessBuilder builder = new PtyProcessBuilder(command)
+                    .setEnvironment(customEnvs)
+                    .setDirectory(directory)
+                    .setInitialColumns(size != null ? size.width : null)
+                    .setInitialRows(size != null ? size.height : null);
+            PtyProcess p = builder.start();
+            TtyConnector connector = createTtyConnector(p);
+
+            ApplicationManager.getApplication().invokeLater(() -> {
+              try {
+                terminalWidget.createTerminalSession(connector);
+              } catch (Exception e) {
+                Logger.getInstance(ExecHelper.class).warn("Cannot create terminal session for " + runningTargetName(), e);
+              }
+              try {
+                terminalWidget.start();
+                terminalWidget.getComponent().revalidate();
+                terminalWidget.notifyStarted();
+              } catch (RuntimeException e) {
+                Logger.getInstance(ExecHelper.class).warn("Cannot open " + runningTargetName(), e);
+              }
+            }, modalityState);
+          } catch (Exception e) {
+            Logger.getInstance(ExecHelper.class).warn("Cannot open " + runningTargetName(), e);
           }
-
-          @Override
-          public String getName() {
-            return title;
-          }
-
-          @Override
-          public boolean isConnected() {
-            return true;
-          }
-        };
-      }
-
-      @Override
-      public String runningTargetName() {
-        return null;
+        });
       }
     };
     return runner;
-  }
-
-  /**
-   * Ensure the terminal window tab is created. This is required because some IJ editions (2018.3) do not
-   * initialize this window when you create a TerminalView through {@link #linkProcessToTerminal(Process, Project, String, boolean)}
-   *
-   * @param project the IJ project
-   */
-  public static void ensureTerminalWindowsIsOpened(Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
-    if (toolWindow != null) {
-      ApplicationManager.getApplication().invokeAndWait(() -> toolWindow.show(null));
-    }
-  }
-
-  public static void linkProcessToTerminal(Process p, Project project, String title,  boolean waitForProcessExit) throws IOException {
-      try {
-        ensureTerminalWindowsIsOpened(project);
-        boolean isPost2018_3 = ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 183;
-        final RedirectedProcess process = new RedirectedProcess(p, true, isPost2018_3);
-        AbstractTerminalRunner runner = createTerminalRunner(project, process, title);
-
-        TerminalOptionsProvider terminalOptions = ServiceManager.getService(TerminalOptionsProvider.class);
-        terminalOptions.setCloseSessionOnLogout(false);
-        final TerminalView view = TerminalView.getInstance(project);
-        final Method[] method = new Method[1];
-        final Object[][] parameters = new Object[1][];
-        try {
-          method[0] = TerminalView.class.getMethod("createNewSession", new Class[] {Project.class, AbstractTerminalRunner.class});
-          parameters[0] = new Object[] {project, runner};
-        } catch (NoSuchMethodException e) {
-          try {
-            method[0] = TerminalView.class.getMethod("createNewSession", new Class[] {AbstractTerminalRunner.class});
-            parameters[0] = new Object[] { runner};
-          } catch (NoSuchMethodException e1) {
-            throw new IOException(e1);
-          }
-        }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          try {
-            method[0].invoke(view, parameters[0]);
-          } catch (IllegalAccessException|InvocationTargetException e) {}
-        });
-        if (waitForProcessExit && p.waitFor() != 0) {
-          throw new IOException("Process returned exit code: " + p.exitValue(), null);
-        }
-    } catch (IOException e) {
-        throw e;
-      }
-      catch (InterruptedException e) {
-        throw new IOException(e);
-      }
   }
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory,
@@ -473,7 +403,18 @@ public class ExecHelper {
               .skip(1)
               .toArray(String[]::new));
     } else {
-      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, envs, command);
+      executeWithTerminalInternal(project, title, workingDirectory, false, true, envs, command);
+    }
+  }
+
+  public static void executeWithTerminal(Project project, String title, File workingDirectory,
+                                         boolean readOnly, boolean keepTabOpened, Map<String, String> envs, String... command) throws IOException {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      execute(command[0], workingDirectory, envs, Arrays.stream(command)
+              .skip(1)
+              .toArray(String[]::new));
+    } else {
+      executeWithTerminalInternal(project, title, workingDirectory, readOnly, keepTabOpened, envs, command);
     }
   }
 
@@ -487,7 +428,7 @@ public class ExecHelper {
   }
 
   public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, Collections.emptyMap(), command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, waitForProcessToExit, Collections.emptyMap(), command);
   }
 
   public static void executeWithTerminal(Project project, String title, Map<String, String> envs, String... command) throws IOException {
