@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
+import javax.annotation.processing.ProcessingEnvironment;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
@@ -337,16 +338,6 @@ public class ExecHelper {
   private static LocalTerminalDirectRunner createTerminalRunner(Project project, boolean readOnly, boolean keepTabOpened, Map<String, String> customEnvs, String... command) {
     Disposable disposable = Disposer.newDisposable();
     LocalTerminalDirectRunner runner = new LocalTerminalDirectRunner(project) {
-      public String[] getCommand(Map<String, String> envs) {
-        envs.putAll(customEnvs);
-        return command;
-      }
-
-      public List<String> getInitialCommand(@NotNull Map<String, String> envs) {
-        envs.putAll(customEnvs);
-        return Arrays.asList(command);
-      }
-
       protected @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory, boolean deferSessionUntilFirstShown) {
         JBTerminalWidget jbTerminalWidget = new JCommonTerminalWidget(project, new JBTerminalSystemSettingsProviderBase(), disposable, readOnly, keepTabOpened);
         Runnable openSession = () -> openSessionInDirectory(jbTerminalWidget, currentWorkingDirectory.getPath());
@@ -362,11 +353,13 @@ public class ExecHelper {
                                          @Nullable String directory) {
         ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
         Dimension size = terminalWidget.getTerminalPanel().getTerminalSizeFromComponent();
+        Map<String, String> envs = new HashMap<>(System.getenv());
+        envs.putAll(customEnvs);
 
         ApplicationManager.getApplication().executeOnPooledThread(() -> {
           try {
             PtyProcessBuilder builder = new PtyProcessBuilder(command)
-                    .setEnvironment(customEnvs)
+                    .setEnvironment(envs)
                     .setDirectory(directory)
                     .setInitialColumns(size != null ? size.width : null)
                     .setInitialRows(size != null ? size.height : null);
