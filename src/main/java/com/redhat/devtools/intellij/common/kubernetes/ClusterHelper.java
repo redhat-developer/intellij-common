@@ -12,28 +12,61 @@ package com.redhat.devtools.intellij.common.kubernetes;
 
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.openshift.client.OpenShiftClient;
 
 public class ClusterHelper {
-    private static String assemble(String major, String minor) {
+
+    public static ClusterInfo getClusterInfo(KubernetesClient client) {
+        if (client instanceof OpenShiftClient) {
+            return new ClusterInfo(
+                    getKubernetesVersion((OpenShiftClient) client),
+                    true,
+                    getOpenShiftVersion((OpenShiftClient) client));
+
+        } else if (Boolean.TRUE.equals(client.isAdaptable(OpenShiftClient.class))){
+            return new ClusterInfo(
+                    getKubernetesVersion(client),
+                    true,
+                    getOpenShiftVersion(client));
+        } else {
+            return new ClusterInfo(
+                    getKubernetesVersion(client),
+                    false,
+                    "");
+
+        }
+    }
+
+    private static String getKubernetesVersion(OpenShiftClient client) {
+        try (KubernetesClient kclient = new DefaultKubernetesClient((client.getConfiguration()))) {
+            return getKubernetesVersion(kclient);
+        } catch (KubernetesClientException e) {
+            return null;
+        }
+    }
+
+    private static String getKubernetesVersion(KubernetesClient client) {
+        VersionInfo version = client.getVersion();
+        return version != null ? version.getGitVersion() : "";
+    }
+
+    private static String getOpenShiftVersion(KubernetesClient client) {
+        try (OpenShiftClient oclient = client.adapt(OpenShiftClient.class)) {
+            return getOpenShiftVersion(oclient);
+        } catch (KubernetesClientException e) {
+            return null;
+        }
+    }
+
+    private static String getOpenShiftVersion(OpenShiftClient client) {
+        VersionInfo version = client.getVersion();
+        return version != null && version.getMajor() != null ? getVersion(version.getMajor(), version.getMinor()) : "";
+    }
+
+    private static String getVersion(String major, String minor) {
         return major + '.' + minor;
     }
 
-    public static ClusterInfo getClusterInfo(KubernetesClient client) {
-        if (client instanceof OpenShiftClient || client.isAdaptable(OpenShiftClient.class)) {
-            OpenShiftClient oclient;
-            if (client instanceof OpenShiftClient) {
-                oclient = (OpenShiftClient) client;
-                client = new DefaultKubernetesClient(client.getConfiguration());
-            } else {
-                oclient = client.adapt(OpenShiftClient.class);
-            }
-            VersionInfo oVersion = oclient.getVersion();
-            return new ClusterInfo(client.getVersion().getGitVersion(), true,
-                    oVersion != null && oVersion.getMajor() != null? assemble(oVersion.getMajor(), oVersion.getMinor()) : "");
-        } else {
-            return new ClusterInfo(client.getVersion().getGitVersion(), false, "");
-        }
-    }
 }
