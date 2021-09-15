@@ -8,7 +8,7 @@
  * Contributors:
  * Red Hat, Inc. - initial API and implementation
  ******************************************************************************/
-package com.redhat.devtools.intellij.common.notification;
+package com.redhat.devtools.intellij.common.compat;
 
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
@@ -44,11 +44,12 @@ public class NotificationGroupFactory {
 
     public static NotificationGroup create(String displayId, NotificationDisplayType type, boolean logByDefault) {
         try {
+            // < IC-2021.3
             // new NotificationGroup(String displayId, NotificationDisplayType defaultDisplayType, boolean logByDefault)
             Constructor<NotificationGroup> constructor = NotificationGroup.class.getConstructor(String.class, NotificationDisplayType.class, boolean.class);
             return constructor.newInstance(displayId, type, logByDefault);
         } catch (NoSuchMethodException | InvocationTargetException | InstantiationException | IllegalAccessException e) {
-            // constructor removed >= 2021.3
+            // constructor removed >= IC-2021.3
             try {
                 // NotificationGroupManager.getInstance().getNotificationGroup(displayId)
                 Class<?> managerClass = Class.forName("com.intellij.notification.NotificationGroupManager");
