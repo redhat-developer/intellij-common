@@ -1,6 +1,11 @@
 #!/usr/bin/env groovy
 
 node('rhel7'){
+	def recipientList = 'jbosstools-builds@lists.jboss.org'
+
+	def javaHome = tool 'openjdk-11'
+	env.JAVA_HOME = "${javaHome}"
+
 	try {
 		stage('Checkout repo') {
 			deleteDir()
