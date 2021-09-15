@@ -65,6 +65,10 @@ def testArtifact = artifacts.add('archives', testJarFile) {
     builtBy 'packageTests'
 }
 
+runPluginVerifier {
+    ideVersions = [ideaVersion]
+}
+
 publishing {
     publications {
         mavenJava(MavenPublication) {
