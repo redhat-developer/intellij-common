@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.ShellTerminalWidget;
 import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
+import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider;
 import org.jetbrains.plugins.terminal.TerminalToolWindowFactory;
 import org.jetbrains.plugins.terminal.TerminalView;
 
@@ -502,10 +504,14 @@ public class ExecHelper {
   }
 
   public static void executeWithTerminalWidget(Project project, String title, String... command) throws IOException {
-    executeWithTerminalWidgetInternal(project, HOME_FOLDER, title, command);
+    executeWithTerminalWidgetInternal(project, HOME_FOLDER, title, Collections.emptyMap(), command);
   }
 
-  public static void executeWithTerminalWidgetInternal(Project project, String workingDirectory, String title, String... command) throws IOException {
+  public static void executeWithTerminalWidget(Project project, String title, Map<String, String> envs, String... command) throws IOException {
+    executeWithTerminalWidgetInternal(project, HOME_FOLDER, title, envs, command);
+  }
+
+  public static void executeWithTerminalWidgetInternal(Project project, String workingDirectory, String title, Map<String, String> envs, String... command) throws IOException {
     ensureTerminalWindowsIsOpened(project);
 
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -514,6 +520,7 @@ public class ExecHelper {
         if (terminal == null) {
           return;
         }
+        TerminalProjectOptionsProvider.getInstance(project).setEnvData(EnvironmentVariablesData.create(envs, true));
         terminal.executeCommand(String.join(" ", command));
       } catch (IOException e) {
         Logger.getInstance(ExecHelper.class).warn("Could execute " + command + " in local shell terminal widget", e);
