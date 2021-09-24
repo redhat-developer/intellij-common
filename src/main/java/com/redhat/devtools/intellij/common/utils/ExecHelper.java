@@ -290,7 +290,7 @@ public class ExecHelper {
    * @param waitForProcessExit wait
    * @param command must not be empty (for correct thread attribution in the stacktrace)
    */
-  public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, String... command) {
+  public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, String... command) throws IOException {
     ExecProcessHandler processHandler = new ExecProcessHandler(p, String.join(" ", command), Charset.defaultCharset());
 
     TerminalExecutionConsole terminalExecutionConsole = new TerminalExecutionConsole(project, processHandler);
@@ -303,6 +303,14 @@ public class ExecHelper {
       ExecRunContentDescriptor contentDescriptor = new ExecRunContentDescriptor(terminalExecutionConsole, processHandler, panel, tabTitle);
       RunContentManager.getInstance(project).showRunContent(DefaultRunExecutor.getRunExecutorInstance(), contentDescriptor);
     });
+
+    try {
+      if (waitForProcessExit && p.waitFor() != 0) {
+        throw new IOException("Process returned exit code: " + p.exitValue(), null);
+      }
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
   }
 
   private static String getTabTitle(Project project, String title) {
