@@ -10,20 +10,33 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.terminal.TerminalExecutionConsole;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
+import com.pty4j.PtyProcess;
+import com.pty4j.PtyProcessBuilder;
 import com.redhat.devtools.intellij.common.CommonConstants;
+import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.List;
+import java.util.OptionalInt;
 import java.util.concurrent.ScheduledFuture;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.JPanel;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
@@ -247,225 +260,63 @@ public class ExecHelper {
     }
   }
 
-  private static class RedirectedStream extends FilterInputStream {
-    private boolean emitLF = false;
-    private final boolean redirect;
-
-    private RedirectedStream(InputStream delegate, boolean redirect) {
-      super(delegate);
-      this.redirect = redirect;
-    }
-
-    @Override
-    public synchronized int read() throws IOException {
-      if (emitLF) {
-        emitLF = false;
-        return '\n';
-      } else {
-        int c = super.read();
-        if (redirect && c == '\n') {
-          emitLF = true;
-          c = '\r';
-        }
-        return c;
-      }
-    }
-
-    @Override
-    public synchronized int read(@NotNull byte[] b) throws IOException {
-      return read(b, 0, b.length);
-    }
-
-    @Override
-    public synchronized int read(@NotNull byte[] b, int off, int len) throws IOException {
-      if (b == null) {
-        throw new NullPointerException();
-      } else if (off < 0 || len < 0 || len > b.length - off) {
-        throw new IndexOutOfBoundsException();
-      } else if (len == 0) {
-        return 0;
-      }
-
-      int c = read();
-      if (c == -1) {
-        return -1;
-      }
-      b[off] = (byte)c;
-
-      int i = 1;
-      try {
-        for (; i < len  && available() > 0; i++) {
-          c = read();
-          if (c == -1) {
-            break;
-          }
-          b[off + i] = (byte)c;
-        }
-      } catch (IOException ee) {}
-      return i;
-    }
-  }
-  private static class RedirectedProcess extends Process {
-    private final Process delegate;
-    private final InputStream inputStream;
-
-    private RedirectedProcess(Process delegate, boolean redirect) {
-      this.delegate = delegate;
-      inputStream = new RedirectedStream(delegate.getInputStream(), redirect) {};
-    }
-
-    @Override
-    public OutputStream getOutputStream() {
-      return delegate.getOutputStream();
-    }
-
-    @Override
-    public InputStream getInputStream() {
-      return inputStream;
-    }
-
-    @Override
-    public InputStream getErrorStream() {
-      return delegate.getErrorStream();
-    }
-
-    @Override
-    public int waitFor() throws InterruptedException {
-      return delegate.waitFor();
-    }
-
-    @Override
-    public boolean waitFor(long timeout, TimeUnit unit) throws InterruptedException {
-      return delegate.waitFor(timeout, unit);
-    }
-
-    @Override
-    public int exitValue() {
-      return delegate.exitValue();
-    }
-
-    @Override
-    public void destroy() {
-      delegate.destroy();
-    }
-
-    @Override
-    public Process destroyForcibly() {
-      return delegate.destroyForcibly();
-    }
-
-    @Override
-    public boolean isAlive() {
-      return delegate.isAlive();
-    }
-  }
   private static void executeWithTerminalInternal(Project project, String title, File workingDirectory,
                                                   boolean waitForProcessExit, Map<String, String> envs,
                                                   String... command) throws IOException {
     try {
-      ProcessBuilder builder = new ProcessBuilder(command).directory(workingDirectory).redirectErrorStream(true);
-      builder.environment().putAll(envs);
-      Process p = builder.start();
-      linkProcessToTerminal(p, project, title, waitForProcessExit);
+      PtyProcessBuilder builder = new PtyProcessBuilder(command);
+      builder.setEnvironment(getEnvs(envs));
+      builder.setDirectory(workingDirectory.getPath());
+      builder.setRedirectErrorStream(true);
+      PtyProcess p = builder.start();
+      linkProcessToTerminal(p, project, title, waitForProcessExit, command);
     } catch (IOException e) {
       throw e;
     }
   }
 
-  private static AbstractTerminalRunner createTerminalRunner(Project project, Process process, String title) {
-    AbstractTerminalRunner runner = new AbstractTerminalRunner(project) {
-      @Override
-      public Process createProcess(@Nullable String s) {
-        return process;
-      }
-
-      @Override
-      protected ProcessHandler createProcessHandler(Process process) {
-        return null;
-      }
-
-      @Override
-      protected String getTerminalConnectionName(Process process) {
-        return null;
-      }
-
-      @Override
-      protected TtyConnector createTtyConnector(Process process) {
-        return new ProcessTtyConnector(process, StandardCharsets.UTF_8) {
-          @Override
-          protected void resizeImmediately() {
-          }
-
-          @Override
-          public String getName() {
-            return title;
-          }
-
-          @Override
-          public boolean isConnected() {
-            return true;
-          }
-        };
-      }
-
-      @Override
-      public String runningTargetName() {
-        return null;
-      }
-    };
-    return runner;
+  private static Map<String, String> getEnvs(Map<String, String> customEnvs) {
+    Map<String, String> envs = new HashMap<>();
+    envs.putAll(System.getenv());
+    envs.putAll(customEnvs);
+    return envs;
   }
 
   /**
-   * Ensure the terminal window tab is created. This is required because some IJ editions (2018.3) do not
-   * initialize this window when you create a TerminalView through {@link #linkProcessToTerminal(Process, Project, String, boolean)}
    *
-   * @param project the IJ project
+   * @param p ptyprocess
+   * @param project project
+   * @param title tab title
+   * @param waitForProcessExit wait
+   * @param command must not be empty (for correct thread attribution in the stacktrace)
    */
-  public static void ensureTerminalWindowsIsOpened(Project project) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
-    if (toolWindow != null) {
-      ApplicationManager.getApplication().invokeAndWait(() -> toolWindow.show(null));
-    }
+  public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, String... command) {
+    ExecProcessHandler processHandler = new ExecProcessHandler(p, String.join(" ", command), Charset.defaultCharset());
+
+    TerminalExecutionConsole terminalExecutionConsole = new TerminalExecutionConsole(project, processHandler);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(terminalExecutionConsole.getComponent(), BorderLayout.CENTER);
+    processHandler.startNotify();
+    String tabTitle = getTabTitle(project, title);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      ExecRunContentDescriptor contentDescriptor = new ExecRunContentDescriptor(terminalExecutionConsole, processHandler, panel, tabTitle);
+      RunContentManager.getInstance(project).showRunContent(DefaultRunExecutor.getRunExecutorInstance(), contentDescriptor);
+    });
   }
 
-  public static void linkProcessToTerminal(Process p, Project project, String title,  boolean waitForProcessExit) throws IOException {
-      try {
-        ensureTerminalWindowsIsOpened(project);
-        boolean isPost2018_3 = ApplicationInfo.getInstance().getBuild().getBaselineVersion() >= 183;
-        final RedirectedProcess process = new RedirectedProcess(p, true);
-        AbstractTerminalRunner runner = createTerminalRunner(project, process, title);
-
-        TerminalOptionsProvider terminalOptions = ServiceManager.getService(TerminalOptionsProvider.class);
-        terminalOptions.setCloseSessionOnLogout(false);
-        final TerminalView view = TerminalView.getInstance(project);
-        final Method[] method = new Method[1];
-        final Object[][] parameters = new Object[1][];
-        try {
-          method[0] = TerminalView.class.getMethod("createNewSession", new Class[] {Project.class, AbstractTerminalRunner.class});
-          parameters[0] = new Object[] {project, runner};
-        } catch (NoSuchMethodException e) {
-          try {
-            method[0] = TerminalView.class.getMethod("createNewSession", new Class[] {AbstractTerminalRunner.class});
-            parameters[0] = new Object[] { runner};
-          } catch (NoSuchMethodException e1) {
-            throw new IOException(e1);
-          }
-        }
-        ApplicationManager.getApplication().invokeLater(() -> {
-          try {
-            method[0].invoke(view, parameters[0]);
-          } catch (IllegalAccessException|InvocationTargetException e) {}
-        });
-        if (waitForProcessExit && p.waitFor() != 0) {
-          throw new IOException("Process returned exit code: " + p.exitValue(), null);
-        }
-    } catch (IOException e) {
-        throw e;
-      }
-      catch (InterruptedException e) {
-        throw new IOException(e);
-      }
+  private static String getTabTitle(Project project, String title) {
+    Pattern pattern = Pattern.compile(title + "\\(([0-9]+)\\)");
+    int max = RunContentManager.getInstance(project).getAllDescriptors()
+            .stream()
+            .mapToInt(run -> {
+              Matcher m = pattern.matcher(run.getDisplayName());
+              if (m.find()) {
+                return Integer.parseInt(m.group(1));
+              }
+              return -1;
+            }).max().orElse(0);
+    return title + "(" + (++max) + ")";
   }
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory,
