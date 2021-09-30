@@ -13,6 +13,7 @@ package com.redhat.devtools.intellij.common.utils;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,5 +53,17 @@ public class ExecProcessHandler extends OSProcessHandler {
                 return true;
             }
         };
+    }
+
+    @NotNull
+    @Override
+    protected Reader createProcessOutReader() {
+        return new ExecReader(myProcess.getInputStream());
+    }
+
+    @NotNull
+    @Override
+    protected Reader createProcessErrReader() {
+        return new ExecReader(myProcess.getErrorStream());
     }
 }
