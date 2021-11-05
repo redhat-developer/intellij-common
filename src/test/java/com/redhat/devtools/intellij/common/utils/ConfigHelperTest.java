@@ -238,6 +238,53 @@ public class ConfigHelperTest {
     }
 
     @Test
+    public void two_authInfos_with_same_provider_token_should_be_equal() {
+        // given
+        String token = "gargamel";
+        AuthInfo authInfo = authInfo(null, authProviderConfig("id-token", token));
+        AuthInfo newAuthInfo = authInfo(null, authProviderConfig("id-token", token));
+        // when
+        boolean equal = ConfigHelper.areEqualToken(authInfo, newAuthInfo);
+        // then
+        assertThat(equal).isTrue();
+    }
+
+    @Test
+    public void two_authInfos_with_same_authinfo_token_should_be_equal() {
+        // given
+        String token = "token42";
+        AuthInfo authInfo = authInfo(token, null);
+        AuthInfo newAuthInfo = authInfo(token, null);
+        // when
+        boolean equal = ConfigHelper.areEqualToken(authInfo, newAuthInfo);
+        // then
+        assertThat(equal).isTrue();
+    }
+
+    @Test
+    public void two_authInfos_with_different_provider_token_should_NOT_be_equal() {
+        // given
+        AuthInfo authInfo = authInfo(null, authProviderConfig("id-token", "gargamel"));
+        AuthInfo newAuthInfo = authInfo(null, authProviderConfig("id-token", "azrael"));
+        // when
+        boolean equal = ConfigHelper.areEqualToken(authInfo, newAuthInfo);
+        // then
+        assertThat(equal).isFalse();
+    }
+
+    @Test
+    public void two_authInfos_with_same_provider_token_in_access_token_should_be_equal() {
+        // given
+        String token = "gargamel";
+        AuthInfo authInfo = authInfo(null, authProviderConfig("access-token", token));
+        AuthInfo newAuthInfo = authInfo(null, authProviderConfig("access-token", token));
+        // when
+        boolean equal = ConfigHelper.areEqualToken(authInfo, newAuthInfo);
+        // then
+        assertThat(equal).isTrue();
+    }
+
+    @Test
     public void kubeConfig_and_clientConfig_are_equal_if_same_in_currentContext_contexts_and_provider_token() {
         // given
         io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(

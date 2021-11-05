@@ -91,6 +91,29 @@ public class ConfigHelper {
 
     /**
      * Returns {@code true} if the given {@link io.fabric8.kubernetes.api.model.Config} and
+     * the new {@link io.fabric8.kubernetes.api.model.Config} are equal. They are considered equal if they're
+     * equal in
+     * <ul>
+     *     <li>current context (cluster, user, current namespace, extensions)</li>
+     *     <li>(authentication) token</li>
+     * </ul>
+     *
+     * @param kubeConfig the (file) config to compare
+     * @param newKubeConfig the (client, runtime) config to compare
+     * @return true if both configs are equal in context, contexts and token
+     */
+    public static boolean areEqualCurrentContext(Config kubeConfig, Config newKubeConfig) {
+        if (newKubeConfig == null) {
+            return kubeConfig == null;
+        } else if (kubeConfig == null) {
+            return false;
+        }
+        return areEqual(KubeConfigUtils.getCurrentContext(newKubeConfig), KubeConfigUtils.getCurrentContext(kubeConfig))
+                && areEqualToken(kubeConfig, newKubeConfig);
+    }
+
+    /**
+     * Returns {@code true} if the given {@link io.fabric8.kubernetes.api.model.Config} and
      * (client runtime) {@link io.fabric8.kubernetes.client.Config} are equal. They are considered equal if they're
      * equal in
      * <ul>
@@ -192,6 +215,19 @@ public class ConfigHelper {
         return areEqualToken(getAuthInfo(kubeConfig), clientConfig);
     }
 
+    /**
+     * Returns {@code true} if the token in the given (kubernetes file) {@link io.fabric8.kubernetes.api.model.Config}
+     * and the one in the new Kubernetes file {@link io.fabric8.kubernetes.api.model.Config} are equal.
+     * Returns {@code false} otherwise.
+     *
+     * @param kubeConfig the (kube config) auth info that contains the token
+     * @param newKubeConfig the (client) config that contains the token
+     * @return true if both tokens are equal, false otherwise
+     */
+    public static boolean areEqualToken(Config kubeConfig, Config newKubeConfig) {
+        return areEqualToken(getAuthInfo(kubeConfig), getAuthInfo(newKubeConfig));
+    }
+
     private static AuthInfo getAuthInfo(Config kubeConfig) {
         NamedContext currentContext = KubeConfigUtils.getCurrentContext(kubeConfig);
         return KubeConfigUtils.getUserAuthInfo(kubeConfig, currentContext.getContext());
@@ -213,6 +249,27 @@ public class ConfigHelper {
             return kubeConfigToken == null;
         }
         return clientConfig.getOauthToken().equals(kubeConfigToken);
+    }
+
+    /**
+     * Returns {@code true} if the token in the given {@link AuthInfo} (that's retrieved from the kube config file)
+     * and the new {@link AuthInfo} (that's retrieved from the new kube config file) are equal.
+     * Returns {@code false} otherwise.
+     *
+     * @param authInfo the (kube config) auth info that contains the token
+     * @param newAuthInfo the new (kube config) auth that contains the token
+     * @return true if both tokens are equal, false otherwise
+     */
+    public static boolean areEqualToken(AuthInfo authInfo, AuthInfo newAuthInfo) {
+        String configToken = getToken(authInfo);
+        String newConfigToken = getToken(newAuthInfo);
+        if (configToken == null) {
+            return newConfigToken == null;
+        } else if (newConfigToken == null) {
+            return false;
+        }
+
+        return configToken.equals(newConfigToken);
     }
 
     /**
