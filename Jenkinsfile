@@ -30,9 +30,9 @@ node('rhel7'){
 				if (isSnapshot) {
 					sh "./gradlew publish -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
 				} else {
-					sh "./gradlew publish closeAndReleaseRepository -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
 					currentBuild.keepLog = true
 					currentBuild.description = "${version}"
+					sh "./gradlew publish closeAndReleaseStagingRepository -PnexusUser=${USER} -PnexusPassword=${PASSWORD}"
 				}
 			}
 		}
