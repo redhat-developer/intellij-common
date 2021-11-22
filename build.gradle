@@ -2,7 +2,7 @@
 plugins {
     id "org.jetbrains.intellij" version "1.1.4"
     id 'maven-publish'
-    id 'io.codearte.nexus-staging' version "0.22.0"
+    id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 }
 
 repositories {
@@ -14,7 +14,6 @@ apply plugin: 'idea'
 apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 apply plugin: 'jacoco'
-apply plugin: 'io.codearte.nexus-staging'
 
 intellij {
     version = ideaVersion //for a full list of IntelliJ IDEA releases please see https://www.jetbrains.com/intellij-repository/releases
@@ -51,11 +50,16 @@ group 'com.redhat.devtools.intellij'
 version projectVersion // Plugin version
 
 
-nexusStaging {
-    serverUrl = 'https://repository.jboss.org/nexus/service/local/'
-    username = nexusUser
-    password = nexusPassword
+nexusPublishing {
     packageGroup = 'JBoss Releases Staging Profile'
+    repositories {
+        jbossNexus {
+            nexusUrl = uri("https://repository.jboss.org/nexus/service/local/")
+            snapshotRepositoryUrl = uri("https://repository.jboss.org/nexus/content/repositories/snapshots/")
+            username = nexusUser // defaults to project.properties["myNexusUsername"]
+            password = nexusPassword // defaults to project.properties["myNexusPassword"]
+        }
+    }
 }
 
 def testJarFile = file("$buildDir/libs/intellij-common-${projectVersion}-test.jar")
@@ -91,17 +95,6 @@ publishing {
                     developerConnection = 'scm:git:ssh://git@github.com:redhat-developer/intellij-common.git'
                     url = 'https://github.com/redhat-developer/intellij-common/'
                 }
-            }
-        }
-    }
-    repositories {
-        maven {
-            def releasesRepoUrl = "https://repository.jboss.org/nexus/service/local/staging/deploy/maven2"
-            def snapshotsRepoUrl = "https://repository.jboss.org/nexus/content/repositories/snapshots/"
-            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-            credentials {
-                username = nexusUser
-                password = nexusPassword
             }
         }
     }
