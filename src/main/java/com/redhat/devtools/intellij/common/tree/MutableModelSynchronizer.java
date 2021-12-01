@@ -36,6 +36,9 @@ public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
     private void invalidatePath(Supplier<TreePath> pathSupplier) {
         treeModel.getInvoker().invokeLater(() -> {
             TreePath path = pathSupplier.get();
+            if (path == null) {
+                return;
+            }
             if (path.getLastPathComponent() == treeModel.getRoot()) {
                 invalidateRoot();
             }
