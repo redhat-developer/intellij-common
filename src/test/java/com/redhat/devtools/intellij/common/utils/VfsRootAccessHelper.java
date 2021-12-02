@@ -30,7 +30,7 @@ public class VfsRootAccessHelper {
             if (method.getParameterCount() > 1) {
                 method.invoke(null, disposable , roots);
             } else {
-                method.q(null, roots);
+                method.invoke(null, roots);
             }
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
