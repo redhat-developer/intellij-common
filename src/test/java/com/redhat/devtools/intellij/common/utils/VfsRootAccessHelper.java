@@ -21,14 +21,15 @@ public class VfsRootAccessHelper {
     private VfsRootAccessHelper() {
     }
 
-    public void allowRootAccess(Disposable disposable, String ... roots) {
+    public static void allowRootAccess(Disposable disposable, String... roots) {
         if (disposable == null) {
-            disposable = () -> {};
+            disposable = () -> {
+            };
         }
         try {
             Method method = Arrays.stream(VfsRootAccess.class.getDeclaredMethods()).filter(m -> m.getName().equals("allowRootAccess")).findFirst().get();
             if (method.getParameterCount() > 1) {
-                method.invoke(null, disposable , roots);
+                method.invoke(null, disposable, roots);
             } else {
                 method.invoke(null, roots);
             }
@@ -37,8 +38,7 @@ public class VfsRootAccessHelper {
         }
     }
 
-    public void allowRootAccess(String ... roots) {
+    public static void allowRootAccess(String... roots) {
         allowRootAccess(null, roots);
     }
-
 }
