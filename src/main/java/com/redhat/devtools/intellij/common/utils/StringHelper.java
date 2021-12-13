@@ -10,6 +10,9 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.psi.PsiElement;
+import org.jetbrains.yaml.psi.YAMLQuotedText;
+
 public class StringHelper {
 
     public static String beautify(String text) {
@@ -25,5 +28,12 @@ public class StringHelper {
         } else {
             return kind + "s";
         }
+    }
+
+    public static String getUnquotedValueFromPsi(PsiElement element) {
+        if (element instanceof YAMLQuotedText) {
+            return ((YAMLQuotedText) element).getTextValue();
+        }
+        return element.getText();
     }
 }
