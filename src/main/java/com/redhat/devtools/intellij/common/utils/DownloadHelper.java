@@ -115,10 +115,11 @@ public class DownloadHelper {
          *
          * @param toolName the name of the tool to download
          * @param url the URL to the tool description file
+         * @param silentMode to define if user should confirm download. If true the download will start automatically.
          * @return the command path
          * @throws IOException if the tool was not found in the config file
          */
-    public String downloadIfRequired(String toolName, URL url) throws IOException {
+    public String downloadIfRequired(String toolName, URL url, boolean silentMode) throws IOException {
         ToolsConfig config = ConfigHelper.loadToolsConfig(url);
         ToolsConfig.Tool tool = config.getTools().get(toolName);
         if (tool == null) {
@@ -132,18 +133,18 @@ public class DownloadHelper {
             if (!Files.exists(path)) {
                 final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
                 final String cmd = path.toString();
-                if (isDownloadAllowed(toolName, version, tool.getVersion())) {
+                if (silentMode || isDownloadAllowed(toolName, version, tool.getVersion())) {
                     command = ProgressManager.getInstance().run(new Task.WithResult<String, IOException>(null, "Downloading " + toolName, true) {
                         @Override
                         public String compute(@NotNull ProgressIndicator progressIndicator) throws IOException {
                             return HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
-                               downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
-                               if (progressIndicator.isCanceled()) {
-                                   throw new IOException("Cancelled");
-                               } else {
-                                   uncompress(dlFilePath, path);
-                                   return cmd;
-                               }
+                                downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
+                                if (progressIndicator.isCanceled()) {
+                                    throw new IOException("Cancelled");
+                                } else {
+                                    uncompress(dlFilePath, path);
+                                    return cmd;
+                                }
                             });
                         }
                     });
@@ -155,16 +156,24 @@ public class DownloadHelper {
         return command;
     }
 
-    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
+    public String downloadIfRequired(String toolName, URL url) throws IOException {
+        return downloadIfRequired(toolName, url, false);
+    }
+
+    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url, boolean silentMode) {
         CompletableFuture<String> result = new CompletableFuture<>();
         ApplicationManager.getApplication().invokeLater(() -> {
             try {
-                result.complete(downloadIfRequired(toolName, url));
+                result.complete(downloadIfRequired(toolName, url, silentMode));
             } catch (IOException e) {
                 result.completeExceptionally(e);
             }
         });
         return result;
+    }
+
+    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
+        return downloadIfRequiredAsync(toolName, url, false);
     }
 
     private boolean isDownloadAllowed(String tool, String currentVersion, String requiredVersion) {
