@@ -42,6 +42,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -91,6 +92,7 @@ public class DownloadHelper {
          *       "versionExtractRegExp": "", //the regular expression to extract the version string from the version command
          *       "versionMatchRegExpr": "", //the regular expression use to match the extracted version to decide if download if required
          *       "baseDir": "" //the basedir to install to, a sub folder named after version will be created, can use $HOME
+         *       "silentMode": true, //if the download needs to be started automatically without user input
          *       "platforms": {
          *         "win": {
          *           "url": "https://tool.com/tool/v1.0.0/odo-windows-amd64.exe.tar.gz",
@@ -115,65 +117,59 @@ public class DownloadHelper {
          *
          * @param toolName the name of the tool to download
          * @param url the URL to the tool description file
-         * @param silentMode to define if user should confirm download. If true the download will start automatically.
          * @return the command path
          * @throws IOException if the tool was not found in the config file
          */
-    public String downloadIfRequired(String toolName, URL url, boolean silentMode) throws IOException {
+    public String downloadIfRequired(String toolName, URL url) throws IOException {
         ToolsConfig config = ConfigHelper.loadToolsConfig(url);
         ToolsConfig.Tool tool = config.getTools().get(toolName);
         if (tool == null) {
             throw new IOException("Tool " + toolName + " not found in config file " + url);
         }
         ToolsConfig.Platform platform = tool.getPlatforms().get(Platform.os().id());
-        String command = platform.getCmdFileName();
+        AtomicReference<String> command = new AtomicReference<>(platform.getCmdFileName());
         String version = getVersionFromPath(tool, platform);
         if (!areCompatible(version, tool.getVersionMatchRegExpr())) {
-            Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command);
+            Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command.get());
             if (!Files.exists(path)) {
                 final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
                 final String cmd = path.toString();
-                if (silentMode || isDownloadAllowed(toolName, version, tool.getVersion())) {
-                    command = ProgressManager.getInstance().run(new Task.WithResult<String, IOException>(null, "Downloading " + toolName, true) {
+                if (tool.isSilentMode() || isDownloadAllowed(toolName, version, tool.getVersion())) {
+                    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Downloading " + toolName, false) {
                         @Override
-                        public String compute(@NotNull ProgressIndicator progressIndicator) throws IOException {
-                            return HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
-                                downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
-                                if (progressIndicator.isCanceled()) {
-                                    throw new IOException("Cancelled");
-                                } else {
+                        public void run(@NotNull ProgressIndicator progressIndicator) {
+                            String result = "";
+                            try {
+                                result = HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
+                                    downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
                                     uncompress(dlFilePath, path);
                                     return cmd;
-                                }
-                            });
+                                });
+                            } catch (IOException ignored) { }
+                            command.set(result);
                         }
                     });
                 }
             } else {
-                command = path.toString();
+                command.set(path.toString());
             }
         }
-        return command;
+        if (command.get().isEmpty()) {
+            throw new IOException("Error while setting tool " + toolName + ".");
+        }
+        return command.get();
     }
 
-    public String downloadIfRequired(String toolName, URL url) throws IOException {
-        return downloadIfRequired(toolName, url, false);
-    }
-
-    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url, boolean silentMode) {
+    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
         CompletableFuture<String> result = new CompletableFuture<>();
         ApplicationManager.getApplication().invokeLater(() -> {
             try {
-                result.complete(downloadIfRequired(toolName, url, silentMode));
+                result.complete(downloadIfRequired(toolName, url));
             } catch (IOException e) {
                 result.completeExceptionally(e);
             }
         });
         return result;
-    }
-
-    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
-        return downloadIfRequiredAsync(toolName, url, false);
     }
 
     private boolean isDownloadAllowed(String tool, String currentVersion, String requiredVersion) {
