@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.util.io.HttpRequests;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import com.twelvemonkeys.lang.Platform;
@@ -138,15 +139,7 @@ public class DownloadHelper {
             Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command);
             final String cmd = path.toString();
             if (!Files.exists(path)) {
-                if (tool.isSilentMode() || isDownloadAllowed(toolName, version, tool.getVersion())) {
-                    if (ApplicationManager.getApplication().isUnitTestMode()) {
-                        downloadInBackground(toolName, platform, path, cmd, result);
-                    } else {
-                        ApplicationManager.getApplication().invokeLater(() -> downloadInBackground(toolName, platform, path, cmd, result));
-                    }
-                } else {
-                    result.complete(command);
-                }
+                downloadInBackground(toolName, platform, path, cmd, tool, version, result);
             } else {
                 result.complete(cmd);
             }
@@ -157,7 +150,21 @@ public class DownloadHelper {
         return result;
     }
 
-    private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, CompletableFuture<String> result) {
+    private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, CompletableFuture<String> result) {
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+            downloadInBackgroundManager(toolName, platform, path, cmd, result);
+        } else {
+            ApplicationManager.getApplication().invokeLater(() -> {
+                if (tool.isSilentMode() || isDownloadAllowed(toolName, version, tool.getVersion())) {
+                    downloadInBackgroundManager(toolName, platform, path, cmd, result);
+                } else {
+                    result.complete(platform.getCmdFileName());
+                }
+            });
+        }
+    }
+
+    private void downloadInBackgroundManager(String toolName, ToolsConfig.Platform platform, Path path, String cmd, CompletableFuture<String> result) {
         final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
         ProgressManager.getInstance().run(new Task.Backgroundable(null, "Downloading " + toolName, false) {
             @Override
@@ -202,7 +209,8 @@ public class DownloadHelper {
     }
 
     private boolean isDownloadAllowed(String tool, String currentVersion, String requiredVersion) {
-        return Messages.showYesNoCancelDialog(StringUtils.isEmpty(currentVersion) ? tool + " not found , do you want to download " + tool + " " + requiredVersion + " ?" : tool + " " + currentVersion + " found, required version is " + requiredVersion + ", do you want to download " + tool + " ?", tool + " tool required", Messages.getQuestionIcon()) == Messages.YES;
+        return UIHelper.executeInUI(() ->
+          Messages.showYesNoCancelDialog(StringUtils.isEmpty(currentVersion) ? tool + " not found , do you want to download " + tool + " " + requiredVersion + " ?" : tool + " " + currentVersion + " found, required version is " + requiredVersion + ", do you want to download " + tool + " ?", tool + " tool required", Messages.getQuestionIcon()) == Messages.YES);
     }
 
     private boolean areCompatible(String version, String versionMatchRegExpr) {
