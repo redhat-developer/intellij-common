@@ -11,6 +11,7 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -42,7 +43,10 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -120,55 +124,80 @@ public class DownloadHelper {
          * @return the command path
          * @throws IOException if the tool was not found in the config file
          */
-    public String downloadIfRequired(String toolName, URL url) throws IOException {
+    private CompletableFuture<String> downloadIfRequiredAsyncInner(String toolName, URL url) throws IOException {
+        CompletableFuture<String> result = new CompletableFuture<>();
         ToolsConfig config = ConfigHelper.loadToolsConfig(url);
         ToolsConfig.Tool tool = config.getTools().get(toolName);
         if (tool == null) {
             throw new IOException("Tool " + toolName + " not found in config file " + url);
         }
         ToolsConfig.Platform platform = tool.getPlatforms().get(Platform.os().id());
-        AtomicReference<String> command = new AtomicReference<>(platform.getCmdFileName());
+        String command = platform.getCmdFileName();
         String version = getVersionFromPath(tool, platform);
         if (!areCompatible(version, tool.getVersionMatchRegExpr())) {
-            Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command.get());
+            Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command);
+            final String cmd = path.toString();
             if (!Files.exists(path)) {
-                final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
-                final String cmd = path.toString();
                 if (tool.isSilentMode() || isDownloadAllowed(toolName, version, tool.getVersion())) {
-                    ProgressManager.getInstance().run(new Task.Backgroundable(null, "Downloading " + toolName, false) {
-                        @Override
-                        public void run(@NotNull ProgressIndicator progressIndicator) {
-                            String result = "";
-                            try {
-                                result = HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
-                                    downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
-                                    uncompress(dlFilePath, path);
-                                    return cmd;
-                                });
-                            } catch (IOException ignored) { }
-                            command.set(result);
-                        }
-                    });
+                    if (ApplicationManager.getApplication().isUnitTestMode()) {
+                        downloadInBackground(toolName, platform, path, cmd, result);
+                    } else {
+                        ApplicationManager.getApplication().invokeLater(() -> downloadInBackground(toolName, platform, path, cmd, result));
+                    }
+                } else {
+                    result.complete(command);
                 }
             } else {
-                command.set(path.toString());
+                result.complete(cmd);
             }
+        } else {
+            result.complete(command);
         }
-        if (command.get().isEmpty()) {
-            throw new IOException("Error while setting tool " + toolName + ".");
+
+        return result;
+    }
+
+    private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, CompletableFuture<String> result) {
+        final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
+        ProgressManager.getInstance().run(new Task.Backgroundable(null, "Downloading " + toolName, false) {
+            @Override
+            public void run(@NotNull ProgressIndicator progressIndicator) {
+                try {
+                    HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
+                        downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
+                        uncompress(dlFilePath, path);
+                        return cmd;
+                    });
+                } catch (IOException ignored) {
+                    result.completeExceptionally(new IOException("Error while setting tool " + toolName + "."));
+                }
+            }
+
+            @Override
+            public void onFinished() {
+                if (!result.isCompletedExceptionally()) {
+                    result.complete(cmd);
+                }
+            }
+        });
+    }
+
+    public String downloadIfRequired(String toolName, URL url) throws IOException {
+        CompletableFuture<String> future = downloadIfRequiredAsyncInner(toolName, url);
+        try {
+            return future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new IOException(e);
         }
-        return command.get();
     }
 
     public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
         CompletableFuture<String> result = new CompletableFuture<>();
-        ApplicationManager.getApplication().invokeLater(() -> {
-            try {
-                result.complete(downloadIfRequired(toolName, url));
-            } catch (IOException e) {
-                result.completeExceptionally(e);
-            }
-        });
+        try {
+            return downloadIfRequiredAsyncInner(toolName, url);
+        } catch (IOException e) {
+            result.completeExceptionally(e);
+        }
         return result;
     }
 
