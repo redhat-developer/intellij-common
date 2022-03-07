@@ -26,6 +26,7 @@ public class ToolsConfig {
     private String versionExtractRegExp;
     private String versionMatchRegExpr;
     private String baseDir;
+    private boolean silentMode;
 
     public Map<String, Platform> getPlatforms() {
       return platforms;
@@ -73,6 +74,14 @@ public class ToolsConfig {
 
     public void setBaseDir(String baseDir) {
       this.baseDir = baseDir;
+    }
+
+    public boolean isSilentMode() {
+      return silentMode;
+    }
+
+    public void setSilentMode(boolean silentMode) {
+      this.silentMode = silentMode;
     }
   }
 

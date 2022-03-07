@@ -6,6 +6,7 @@
       "versionExtractRegExp": "Client version: (\\d+[\\.\\d+]*)\\s.*",
       "versionMatchRegExpr": "0\\..*",
       "baseDir": ".",
+      "silentMode": true,
       "platforms": {
         "win": {
           "url": "file:src/test/resources/tkn.gz",
