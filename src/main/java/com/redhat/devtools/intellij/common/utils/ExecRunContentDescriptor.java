@@ -25,6 +25,6 @@ public class ExecRunContentDescriptor extends RunContentDescriptor {
 
     @Override
     public boolean isContentReuseProhibited() {
-        return true;
+        return false;
     }
 }
