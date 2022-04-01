@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
@@ -18,7 +19,7 @@ import java.nio.charset.Charset;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExecProcessHandler extends OSProcessHandler {
+public class ExecProcessHandler extends KillableProcessHandler {
 
     /**
      *
