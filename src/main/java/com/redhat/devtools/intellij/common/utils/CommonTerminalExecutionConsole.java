@@ -47,14 +47,14 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ProcessHandlerTtyConnector;
 import com.intellij.util.LineSeparator;
 import com.jediterm.terminal.HyperlinkStyle;
-import com.jediterm.terminal.RequestOrigin;
+import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TerminalDataStream;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.JediTerminal;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
-import com.jediterm.terminal.util.CharUtils;
 import com.pty4j.PtyProcess;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -63,9 +63,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.BoundedRangeModel;
 import javax.swing.JComponent;
 import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.event.KeyEvent;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -88,6 +88,7 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
     private ProcessHandler processHandler;
     private ProcessAdapter processAdapter;
     private boolean contentToBeStarted = false;
+    private static final int ESC = 27;
 
     private boolean myEnterKeyDefaultCodeEnabled = true;
 
@@ -102,7 +103,6 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
         };
         myDataStream = new AppendableTerminalDataStream();
         myTerminalWidget = new ConsoleTerminalWidget(project, provider);
-        Disposer.register(myTerminalWidget, provider);
         if (processHandler != null) {
             attachToProcess(processHandler);
         }
@@ -117,13 +117,13 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
         myDataStream.append(text);
 
         if (foregroundColor != null) {
-            myDataStream.append((char) CharUtils.ESC + "[39m"); //restore default foreground color
+            myDataStream.append((char) ESC + "[39m"); //restore default foreground color
         }
     }
 
     @NotNull
     private static String encodeColor(@NotNull Color color) {
-        return ((char)CharUtils.ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
+        return ((char)ESC) + "[" + "38;2;" + color.getRed() + ";" + color.getGreen() + ";" +
                 color.getBlue() + "m";
     }
 
@@ -370,16 +370,6 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
                                                       @NotNull TerminalTextBuffer textBuffer) {
             JBTerminalPanel panel = new JBTerminalPanel((JBTerminalSystemSettingsProviderBase)settingsProvider, textBuffer, styleState) {
                 @Override
-                public Dimension requestResize(Dimension newSize,
-                                               RequestOrigin origin,
-                                               int cursorX,
-                                               int cursorY,
-                                               JediTerminal.ResizeHandler resizeHandler) {
-                    Dimension dimension = super.requestResize(newSize, origin, cursorX, cursorY, resizeHandler);
-                    return dimension;
-                }
-
-                @Override
                 public void clearBuffer() {
                     super.clearBuffer(false);
                 }
@@ -391,17 +381,18 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
 
         @Override
         protected TerminalStarter createTerminalStarter(JediTerminal terminal, TtyConnector connector) {
-            return new TerminalStarter(terminal, connector, myDataStream) {
-                @Override
-                public byte[] getCode(int key, int modifiers) {
-                    if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {
-                        // pty4j expects \r as Enter key code
-                        // https://github.com/JetBrains/pty4j/blob/0.9.4/test/com/pty4j/PtyTest.java#L54
-                        return LineSeparator.CR.getSeparatorBytes();
-                    }
-                    return super.getCode(key, modifiers);
+            try {
+                try {
+                    Constructor<TerminalStarter> constructor = TerminalStarter.class.getConstructor(Terminal.class, TtyConnector.class, TerminalDataStream.class);
+                    return constructor.newInstance(terminal, connector, myDataStream);
+                } catch (NoSuchMethodException e) {
+                    Constructor<TerminalStarter> constructor = (Constructor<TerminalStarter>) TerminalStarter.class.getConstructors()[0];
+                    return constructor.newInstance(terminal, connector, myDataStream, null);
                 }
-            };
+            } catch (InvocationTargetException | InstantiationException | IllegalAccessException e) {
+                LOG.warn(e.getLocalizedMessage(), e);
+            }
+            return null;
         }
 
         @Nullable
