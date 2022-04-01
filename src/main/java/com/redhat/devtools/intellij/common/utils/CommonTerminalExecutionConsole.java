@@ -45,7 +45,6 @@ import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.ProcessHandlerTtyConnector;
-import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.LineSeparator;
 import com.jediterm.terminal.HyperlinkStyle;
 import com.jediterm.terminal.RequestOrigin;
@@ -215,6 +214,10 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
             );
             myTerminalWidget.start();
             contentToBeStarted = true;
+        } else {
+            myTerminalWidget.setTtyConnector(new ProcessHandlerTtyConnector(
+                    processHandler, EncodingProjectManager.getInstance(myProject).getDefaultCharset())
+            );
         }
 
         updateProcessHandler(processHandler);
