@@ -132,7 +132,10 @@ public class DownloadHelper {
         if (tool == null) {
             throw new IOException("Tool " + toolName + " not found in config file " + url);
         }
-        ToolsConfig.Platform platform = tool.getPlatforms().get(Platform.os().id());
+        ToolsConfig.Platform platform = getPlatformBasedOnOs(tool);
+        if (platform == null) {
+            throw new IOException("Tool " + toolName + " not found in config file " + url);
+        }
         String command = platform.getCmdFileName();
         String version = getVersionFromPath(tool, platform);
         if (!areCompatible(version, tool.getVersionMatchRegExpr())) {
@@ -148,6 +151,19 @@ public class DownloadHelper {
         }
 
         return result;
+    }
+
+    private ToolsConfig.Platform getPlatformBasedOnOs(ToolsConfig.Tool tool) {
+        String osArch = System.getProperty("os.arch");
+        String osId = Platform.os().id();
+        if (osArch != null
+            && tool.getPlatforms().containsKey(osId + "-" + osArch)) {
+                return tool.getPlatforms().get(osId + "-" + osArch);
+        } else if ("arm64".equals(osArch)) {
+            return null;
+        }
+        return tool.getPlatforms().get(osId);
+
     }
 
     private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, CompletableFuture<String> result) {
