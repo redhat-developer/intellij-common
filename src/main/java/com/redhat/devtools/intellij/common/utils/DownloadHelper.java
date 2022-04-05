@@ -154,13 +154,10 @@ public class DownloadHelper {
     }
 
     private ToolsConfig.Platform getPlatformBasedOnOs(ToolsConfig.Tool tool) {
-        String osArch = System.getProperty("os.arch");
+        String osArch = Platform.arch().toString();
         String osId = Platform.os().id();
-        if (osArch != null
-            && tool.getPlatforms().containsKey(osId + "-" + osArch)) {
+        if (tool.getPlatforms().containsKey(osId + "-" + osArch)) {
                 return tool.getPlatforms().get(osId + "-" + osArch);
-        } else if ("arm64".equals(osArch)) {
-            return null;
         }
         return tool.getPlatforms().get(osId);
 
