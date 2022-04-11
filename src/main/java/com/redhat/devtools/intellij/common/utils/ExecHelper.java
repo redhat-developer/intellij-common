@@ -10,53 +10,27 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
-import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.terminal.TerminalExecutionConsole;
-import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
 import com.pty4j.PtyProcessBuilder;
 import com.redhat.devtools.intellij.common.CommonConstants;
-import java.awt.BorderLayout;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.util.List;
-import java.util.OptionalInt;
-import java.util.concurrent.ScheduledFuture;
-import java.util.function.Consumer;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.swing.JPanel;
 import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.output.WriterOutputStream;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
-import org.jetbrains.plugins.terminal.TerminalOptionsProvider;
-import org.jetbrains.plugins.terminal.TerminalView;
 
+import javax.swing.JPanel;
+import java.awt.BorderLayout;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -68,6 +42,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.redhat.devtools.intellij.common.CommonConstants.HOME_FOLDER;
 
@@ -262,17 +238,32 @@ public class ExecHelper {
 
   private static void executeWithTerminalInternal(Project project, String title, File workingDirectory,
                                                   boolean waitForProcessExit, Map<String, String> envs,
+                                                  CommonTerminalExecutionConsole terminalToReuse,
                                                   String... command) throws IOException {
     try {
-      PtyProcessBuilder builder = new PtyProcessBuilder(command);
-      builder.setEnvironment(getEnvs(envs));
-      builder.setDirectory(workingDirectory.getPath());
-      builder.setRedirectErrorStream(true);
-      PtyProcess p = builder.start();
-      linkProcessToTerminal(p, project, title, waitForProcessExit, command);
+      PtyProcess p = createPtyProcess(workingDirectory, envs, command);
+      if (terminalToReuse != null) {
+        attachProcessToTerminal(terminalToReuse, p, waitForProcessExit, command);
+      } else {
+        linkProcessToTerminal(p, project, title, waitForProcessExit, command);
+      }
     } catch (IOException e) {
       throw e;
     }
+  }
+
+  public static CommonTerminalExecutionConsole createTerminalTabForReuse(Project project, String title) {
+    String tabTitle = getTabTitle(project, title);
+    return new CommonTerminalExecutionConsole(project, null, tabTitle);
+  }
+
+
+  private static PtyProcess createPtyProcess(File workingDirectory, Map<String, String> envs, String[] command) throws IOException {
+    PtyProcessBuilder builder = new PtyProcessBuilder(command);
+    builder.setEnvironment(getEnvs(envs));
+    builder.setDirectory(workingDirectory.getPath());
+    builder.setRedirectErrorStream(true);
+    return builder.start();
   }
 
   private static Map<String, String> getEnvs(Map<String, String> customEnvs) {
@@ -313,6 +304,21 @@ public class ExecHelper {
     }
   }
 
+  public static void attachProcessToTerminal(CommonTerminalExecutionConsole terminalExecutionConsole, PtyProcess p, boolean waitForProcessExit, String... command) throws IOException {
+    ExecProcessHandler processHandler = new ExecProcessHandler(p, String.join(" ", command), Charset.defaultCharset());
+
+    terminalExecutionConsole.attachToProcess(processHandler);
+    processHandler.startNotify();
+
+    try {
+      if (waitForProcessExit && p.waitFor() != 0) {
+        throw new IOException("Process returned exit code: " + p.exitValue(), null);
+      }
+    } catch (InterruptedException e) {
+      throw new IOException(e);
+    }
+  }
+
   private static String getTabTitle(Project project, String title) {
     Pattern pattern = Pattern.compile(title + "\\(([0-9]+)\\)");
     int max = RunContentManager.getInstance(project).getAllDescriptors()
@@ -328,35 +334,40 @@ public class ExecHelper {
   }
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory,
-                                         boolean waitForProcessToExit, Map<String, String> envs, String... command) throws IOException {
+                                         boolean waitForProcessToExit, Map<String, String> envs,
+                                         CommonTerminalExecutionConsole terminalToReuse, String... command) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       execute(command[0], workingDirectory, envs, Arrays.stream(command)
               .skip(1)
               .toArray(String[]::new));
     } else {
-      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, envs, command);
+      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, envs, terminalToReuse, command);
     }
   }
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory, String... command) throws IOException {
-    executeWithTerminal(project, title, workingDirectory, true, Collections.emptyMap(), command);
+    executeWithTerminal(project, title, workingDirectory, true, Collections.emptyMap(), null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit,
                                          Map<String, String> envs, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, envs, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, envs, null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, Collections.emptyMap(), command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, Collections.emptyMap(), null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, Map<String, String> envs, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), null, command);
+  }
+
+  public static void executeWithTerminal(Project project, String title, Map<String, String> envs, CommonTerminalExecutionConsole terminalToReuse, String... command) throws IOException {
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, terminalToReuse, command);
   }
 
   public static void executeWithUI(Map<String, String> envs, Runnable initRunnable, Consumer<String> runnable, String... command) throws IOException {
