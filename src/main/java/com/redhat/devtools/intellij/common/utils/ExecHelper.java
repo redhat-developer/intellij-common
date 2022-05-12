@@ -281,6 +281,18 @@ public class ExecHelper {
    * @param project project
    * @param title tab title
    * @param waitForProcessExit wait
+   * @param command must not be empty (for correct thread attribution in the stacktrace)
+   */
+  public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, String... command) throws IOException {
+    linkProcessToTerminal(p, project, title, waitForProcessExit, null, command);
+  }
+
+  /**
+   *
+   * @param p ptyprocess
+   * @param project project
+   * @param title tab title
+   * @param waitForProcessExit wait
    * @param processListener listener to attach to the process
    * @param command must not be empty (for correct thread attribution in the stacktrace)
    */
