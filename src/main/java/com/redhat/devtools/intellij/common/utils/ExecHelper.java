@@ -11,6 +11,8 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -238,14 +240,14 @@ public class ExecHelper {
 
   private static void executeWithTerminalInternal(Project project, String title, File workingDirectory,
                                                   boolean waitForProcessExit, Map<String, String> envs,
-                                                  CommonTerminalExecutionConsole terminalToReuse,
+                                                  ConsoleView terminalToReuse, ProcessListener processListener,
                                                   String... command) throws IOException {
     try {
       PtyProcess p = createPtyProcess(workingDirectory, envs, command);
       if (terminalToReuse != null) {
-        attachProcessToTerminal(terminalToReuse, p, waitForProcessExit, command);
+        attachProcessToTerminal(terminalToReuse, p, waitForProcessExit, processListener, command);
       } else {
-        linkProcessToTerminal(p, project, title, waitForProcessExit, command);
+        linkProcessToTerminal(p, project, title, waitForProcessExit, processListener, command);
       }
     } catch (IOException e) {
       throw e;
@@ -282,7 +284,23 @@ public class ExecHelper {
    * @param command must not be empty (for correct thread attribution in the stacktrace)
    */
   public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, String... command) throws IOException {
+    linkProcessToTerminal(p, project, title, waitForProcessExit, null, command);
+  }
+
+  /**
+   *
+   * @param p ptyprocess
+   * @param project project
+   * @param title tab title
+   * @param waitForProcessExit wait
+   * @param processListener listener to attach to the process
+   * @param command must not be empty (for correct thread attribution in the stacktrace)
+   */
+  public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, ProcessListener processListener, String... command) throws IOException {
     ExecProcessHandler processHandler = new ExecProcessHandler(p, String.join(" ", command), Charset.defaultCharset());
+    if (processListener != null) {
+      processHandler.addProcessListener(processListener);
+    }
 
     TerminalExecutionConsole terminalExecutionConsole = new TerminalExecutionConsole(project, processHandler);
 
@@ -304,9 +322,11 @@ public class ExecHelper {
     }
   }
 
-  public static void attachProcessToTerminal(CommonTerminalExecutionConsole terminalExecutionConsole, PtyProcess p, boolean waitForProcessExit, String... command) throws IOException {
+  public static void attachProcessToTerminal(ConsoleView terminalExecutionConsole, PtyProcess p, boolean waitForProcessExit, ProcessListener processListener, String... command) throws IOException {
     ExecProcessHandler processHandler = new ExecProcessHandler(p, String.join(" ", command), Charset.defaultCharset());
-
+    if (processListener != null) {
+      processHandler.addProcessListener(processListener);
+    }
     terminalExecutionConsole.attachToProcess(processHandler);
     processHandler.startNotify();
 
@@ -335,39 +355,44 @@ public class ExecHelper {
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory,
                                          boolean waitForProcessToExit, Map<String, String> envs,
-                                         CommonTerminalExecutionConsole terminalToReuse, String... command) throws IOException {
+                                         ConsoleView terminalToReuse, ProcessListener processListener,
+                                         String... command) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       execute(command[0], workingDirectory, envs, Arrays.stream(command)
               .skip(1)
               .toArray(String[]::new));
     } else {
-      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, envs, terminalToReuse, command);
+      executeWithTerminalInternal(project, title, workingDirectory, waitForProcessToExit, envs, terminalToReuse, processListener, command);
     }
   }
 
   public static void executeWithTerminal(Project project, String title, File workingDirectory, String... command) throws IOException {
-    executeWithTerminal(project, title, workingDirectory, true, Collections.emptyMap(), null, command);
+    executeWithTerminal(project, title, workingDirectory, true, Collections.emptyMap(), null, null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit,
                                          Map<String, String> envs, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, envs, null, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, envs, null, null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, boolean waitForProcessToExit, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, Collections.emptyMap(), null, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), waitForProcessToExit, Collections.emptyMap(), null, null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, Map<String, String> envs, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, null, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, null, null, command);
   }
 
   public static void executeWithTerminal(Project project, String title, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), null, command);
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), null, null, command);
   }
 
-  public static void executeWithTerminal(Project project, String title, Map<String, String> envs, CommonTerminalExecutionConsole terminalToReuse, String... command) throws IOException {
-    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, terminalToReuse, command);
+  public static void executeWithTerminal(Project project, String title, Map<String, String> envs, ConsoleView terminalToReuse, String... command) throws IOException {
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, terminalToReuse, null, command);
+  }
+
+  public static void executeWithTerminal(Project project, String title, Map<String, String> envs, ConsoleView terminalToReuse, ProcessListener processListener, String... command) throws IOException {
+    executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, terminalToReuse, processListener, command);
   }
 
   public static void executeWithUI(Map<String, String> envs, Runnable initRunnable, Consumer<String> runnable, String... command) throws IOException {
