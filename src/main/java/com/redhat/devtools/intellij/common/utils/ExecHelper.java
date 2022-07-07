@@ -406,6 +406,10 @@ public class ExecHelper {
     executeWithTerminal(project, title, new File(HOME_FOLDER), true, Collections.emptyMap(), null, null, null, command);
   }
 
+  public static void executeWithTerminal(Project project, String title, File workingDirectory, boolean waitForProcessToExit, Map<String, String> envs, String... command) throws IOException {
+    executeWithTerminal(project, title, workingDirectory, waitForProcessToExit, envs, null, null, null, command);
+  }
+
   public static void executeWithTerminal(Project project, String title, Map<String, String> envs, ConsoleView terminalToReuse, String... command) throws IOException {
     executeWithTerminal(project, title, new File(HOME_FOLDER), true, envs, terminalToReuse, null, null, command);
   }
