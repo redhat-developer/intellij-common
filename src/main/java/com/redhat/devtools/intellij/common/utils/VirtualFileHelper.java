@@ -38,6 +38,16 @@ public class VirtualFileHelper {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     }
 
+    /**
+     * Removes the clutter properties {@link com.redhat.devtools.intellij.common.CommonConstants#metadataClutter} from the given resource.
+     *
+     * @param content
+     * @return the content without the clutter properties
+     *
+     * @deprecated
+     * Deprecated since 1.8.0, use {@link ObjectMetadataClutter#remove(String)} instead.
+     */
+    @Deprecated
     public static String cleanContent(String content) {
         if (content.isEmpty()) {
             return content;
