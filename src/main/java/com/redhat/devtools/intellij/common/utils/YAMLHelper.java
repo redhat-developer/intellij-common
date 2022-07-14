@@ -23,12 +23,12 @@ import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER;
 
 public class YAMLHelper {
 
     private static final ObjectMapper YAML_MAPPER = new ObjectMapper(new YAMLFactory());
+    private static final Pattern PATTERN_PROPERTY = Pattern.compile("(\\w+)(\\[(\\d)\\])*");
 
     /**
      * Retrieve value as String from YAML text
@@ -55,22 +55,12 @@ public class YAMLHelper {
     public static JsonNode getValueFromYAML(String yamlAsString, String[] path) throws IOException {
         if (yamlAsString == null) return null;
         JsonNode node = YAML_MAPPER.readTree(yamlAsString);
-        Pattern arrayPattern = Pattern.compile("(\\w+)(\\[(\\d)\\])*");
         for (String field: path) {
-            int index = -1;
-            Matcher match = arrayPattern.matcher(field);
-            if (match.matches() && match.group(3) != null) {
-                field = match.group(1);
-                index = Integer.parseInt(match.group(3));
-            }
-            if (!node.has(field) ||
-                    (index != -1 && !node.get(field).has(index))) {
+            Property property = createProperty(field, node);
+            if (!property.existsIn(node)) {
                 return null;
             }
-            node = node.get(field);
-            if (index != -1) {
-                node = node.get(index);
-            }
+            node = property.getNodeIn(node);
         }
         return node;
     }
@@ -116,28 +106,16 @@ public class YAMLHelper {
         } else {
             JsonNode node = YAML_MAPPER.readTree(yamlAsString);
             JsonNode tmpNode = node;
-            Pattern arrayPattern = Pattern.compile("(\\w+)(\\[(\\d)\\])*");
 
-            for(int i = 0; i < fieldnames.length; ++i) {
-                String fieldname = fieldnames[i];
-                int index = -1;
-                Matcher match = arrayPattern.matcher(fieldname);
-                if (match.matches() && match.group(3) != null) {
-                    fieldname = match.group(1);
-                    index = Integer.parseInt(match.group(3));
-                }
-                if (!tmpNode.has(fieldname) ||
-                        (index != -1 && !tmpNode.get(fieldname).has(index))) {
+            for (int i = 0; i < fieldnames.length; ++i) {
+                Property property = createProperty(fieldnames[i], tmpNode);
+                if (!property.existsIn(tmpNode)) {
                     return null;
                 }
-
                 if (i == fieldnames.length - 1) {
-                    ((ObjectNode) tmpNode).put(fieldname, value);
+                    ((ObjectNode) tmpNode).put(property.getName(), value);
                 } else {
-                    tmpNode = tmpNode.get(fieldname);
-                    if (index != -1) {
-                        tmpNode = tmpNode.get(index);
-                    }
+                    tmpNode = property.getNodeIn(tmpNode);
                 }
             }
 
@@ -201,4 +179,67 @@ public class YAMLHelper {
         resource.set("metadata", metadata);
         return resource;
     }
+
+    private static Property createProperty(String name, JsonNode node) {
+        Property property = null;
+        Matcher match = PATTERN_PROPERTY.matcher(name);
+        if (match.matches()
+                && match.group(3) != null) {
+            property = new ArrayProperty(match.group(1), Integer.parseInt(match.group(3)));
+        } else {
+            property = new Property(name);
+        }
+        return property;
+    }
+
+    private static class Property {
+
+        protected final String name;
+
+        Property(String name) {
+            this.name = name;
+        }
+
+        public boolean existsIn(JsonNode node) {
+            return node != null
+                    && node.has(name);
+        }
+
+        public JsonNode getNodeIn(JsonNode node) {
+            if (node == null) {
+                return null;
+            }
+            return node.get(name);
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    private static class ArrayProperty extends Property {
+
+        private final int index;
+
+        ArrayProperty(String name, int index) {
+            super(name);
+            this.index = index;
+        }
+
+        public boolean existsIn(JsonNode node) {
+            return node != null
+                    && node.get(name) != null
+                    && node.get(name).get(index) != null;
+        }
+
+        public JsonNode getNodeIn(JsonNode node) {
+            if (node == null
+                    || node.get(name) == null) {
+                return null;
+            }
+            return node.get(name).get(index);
+        }
+
+    }
+
 }
