@@ -23,6 +23,12 @@ public class CommonConstants {
     public static final Key<String> CONTENT = Key.create("com.redhat.devtools.intellij.common.content");
     public static final Key<Boolean> CLEANED = Key.create("com.redhat.devtools.intellij.common.cleaned");
 
+    /**
+     * Properties in {@link io.fabric8.kubernetes.api.model.ObjectMeta} that are considered disposable clutter.
+     *
+     * @deprecated since 1.8.0, use {@link com.redhat.devtools.intellij.common.utils.ObjectMetadataClutter#properties} instead
+     */
+    @Deprecated
     public static final List<String> metadataClutter = Arrays.asList(
             "clusterName",
             "creationTimestamp",

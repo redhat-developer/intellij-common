@@ -55,6 +55,7 @@ public class YAMLHelper {
     public static JsonNode getValueFromYAML(String yamlAsString, String[] path) throws IOException {
         if (yamlAsString == null) return null;
         JsonNode node = YAML_MAPPER.readTree(yamlAsString);
+        Pattern arrayPattern = Pattern.compile("(\\w+)(\\[(\\d)\\])*");
         for (String field: path) {
             Property property = createProperty(field, node);
             if (!property.existsIn(node)) {
@@ -106,14 +107,14 @@ public class YAMLHelper {
         } else {
             JsonNode node = YAML_MAPPER.readTree(yamlAsString);
             JsonNode tmpNode = node;
-
             for (int i = 0; i < fieldnames.length; ++i) {
                 Property property = createProperty(fieldnames[i], tmpNode);
                 if (!property.existsIn(tmpNode)) {
                     return null;
                 }
+
                 if (i == fieldnames.length - 1) {
-                    ((ObjectNode) tmpNode).put(property.getName(), value);
+                    ((ObjectNode) tmpNode).put(fieldnames[i], value);
                 } else {
                     tmpNode = property.getNodeIn(tmpNode);
                 }
@@ -241,5 +242,4 @@ public class YAMLHelper {
         }
 
     }
-
 }
