@@ -45,7 +45,7 @@ public class VirtualFileHelper {
      * @return the content without the clutter properties
      *
      * @deprecated
-     * Deprecated since 1.8.0, use {@link ObjectMetadataClutter#remove(String)} instead.
+     * Deprecated since 1.8.0, use {@link MetadataClutter#remove(String)} instead.
      */
     @Deprecated
     public static String cleanContent(String content) {
