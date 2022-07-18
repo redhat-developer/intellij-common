@@ -12,6 +12,8 @@ package com.redhat.devtools.intellij.common;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.redhat.devtools.intellij.common.utils.MetadataClutter;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class CommonConstants {
     /**
      * Properties in {@link io.fabric8.kubernetes.api.model.ObjectMeta} that are considered disposable clutter.
      *
-     * @deprecated since 1.8.0, use {@link com.redhat.devtools.intellij.common.utils.ObjectMetadataClutter#properties} instead
+     * @deprecated since 1.8.0, use {@link MetadataClutter#properties} instead
      */
     @Deprecated
     public static final List<String> metadataClutter = Arrays.asList(

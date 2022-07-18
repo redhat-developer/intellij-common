@@ -11,15 +11,18 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
-public class ObjectMetadataClutter {
-    private static final Logger logger = LoggerFactory.getLogger(ObjectMetadataClutter.class);
+public class MetadataClutter {
+    private static final Logger logger = LoggerFactory.getLogger(MetadataClutter.class);
 
     /**
      * Properties in {@link io.fabric8.kubernetes.api.model.ObjectMeta} that are considered disposable clutter.
@@ -38,10 +41,24 @@ public class ObjectMetadataClutter {
             "uid"
     );
 
+    private static final List<Consumer<ObjectMeta>> setters = Arrays.asList(
+            metadata -> metadata.setClusterName(null),
+            metadata -> metadata.setCreationTimestamp(null),
+            metadata -> metadata.setDeletionGracePeriodSeconds(null),
+            metadata -> metadata.setDeletionTimestamp(null),
+            metadata -> metadata.setFinalizers(Collections.emptyList()),
+            metadata -> metadata.setGeneration(null),
+            metadata -> metadata.setManagedFields(Collections.emptyList()),
+            metadata -> metadata.setOwnerReferences(Collections.emptyList()),
+            metadata -> metadata.setResourceVersion(null),
+            metadata -> metadata.setSelfLink(null),
+            metadata -> metadata.setUid(null)
+    );
+
     private static final String PROPERTY_METADATA = "metadata";
 
     /**
-     * Removes clutter properties from the given content. Does nothing if the content is {@code null} or empty.
+     * Removes clutter properties from the given textual content. Does nothing if the content is {@code null} or empty.
      *
      * @param resource where the clutter properties should be removed from
      * @return the content without the clutter properties
@@ -65,4 +82,20 @@ public class ObjectMetadataClutter {
         }
         return resource;
     }
+
+    /**
+     * Removes clutter properties from the given {@link ObjectMeta} content. Does nothing if the content is {@code null}.
+     *
+     * @param metadata where the clutter properties should be removed from
+     * @return the metadata without the clutter properties
+     */
+    public static ObjectMeta remove(ObjectMeta metadata) {
+        if (metadata == null) {
+            return null;
+        }
+
+        setters.forEach(consumer -> consumer.accept(metadata));
+        return metadata;
+    }
+
 }
