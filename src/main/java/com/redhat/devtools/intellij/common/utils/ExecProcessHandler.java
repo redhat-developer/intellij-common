@@ -10,16 +10,15 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
-import com.intellij.execution.process.KillableProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.KillableColoredProcessHandler;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.Reader;
 import java.nio.charset.Charset;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class ExecProcessHandler extends KillableProcessHandler {
+public class ExecProcessHandler extends KillableColoredProcessHandler {
 
     /**
      *
@@ -27,7 +26,7 @@ public class ExecProcessHandler extends KillableProcessHandler {
      * @param commandLine must not be empty (for correct thread attribution in the stacktrace)
      * @param charset charset
      */
-    public ExecProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @Nullable Charset charset) {
+    public ExecProcessHandler(@NotNull Process process, /*@NotNull*/ String commandLine, @NotNull Charset charset) {
         super(process, commandLine, charset);
     }
 
