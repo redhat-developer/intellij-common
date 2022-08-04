@@ -18,16 +18,16 @@ public class GettingStartedCourseBuilder {
 
     public GettingStartedCourseBuilder() { }
 
-    public GettingStartedCourseBuilder createGettingStartedCourse(String title) {
-        return createGettingStartedCourse(title, "");
+    public GettingStartedCourseBuilder createGettingStartedCourse(String version, String title) {
+        return createGettingStartedCourse(version, title, "");
     }
 
-    public GettingStartedCourseBuilder createGettingStartedCourse(String title, String shortDescription) {
-        return createGettingStartedCourse(title, shortDescription, null);
+    public GettingStartedCourseBuilder createGettingStartedCourse(String version, String title, String shortDescription) {
+        return createGettingStartedCourse(version, title, shortDescription, null);
     }
 
-    public GettingStartedCourseBuilder createGettingStartedCourse(String title, String shortDescription, URL feedbackUrl) {
-        course = new GettingStartedCourse(title, shortDescription, feedbackUrl);
+    public GettingStartedCourseBuilder createGettingStartedCourse(String version, String title, String shortDescription, URL feedbackUrl) {
+        course = new GettingStartedCourse(version, title, shortDescription, feedbackUrl);
         return this;
     }
 

@@ -20,17 +20,17 @@ public class GettingStartedLesson {
     private final String title;
     private final String description;
     private final List<Action> actions;
-    private final URL gif;
+    private final URL animatedImage;
 
     public GettingStartedLesson(String title) {
         this(title, "", Collections.emptyList(), null);
     }
 
-    public GettingStartedLesson(String title, String description, List<Action> actions, URL gif) {
+    public GettingStartedLesson(String title, String description, List<Action> actions, URL animatedImage) {
         this.title = title;
         this.description = description;
         this.actions = actions;
-        this.gif = gif;
+        this.animatedImage = animatedImage;
     }
 
     public String getTitle() {
@@ -45,7 +45,7 @@ public class GettingStartedLesson {
         return actions;
     }
 
-    public URL getGif() {
-        return gif;
+    public URL getAnimatedImage() {
+        return animatedImage;
     }
 }

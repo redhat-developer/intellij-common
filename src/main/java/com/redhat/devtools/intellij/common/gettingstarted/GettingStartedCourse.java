@@ -17,15 +17,17 @@ import java.util.List;
 public class GettingStartedCourse {
 
     private final List<GettingStartedGroupLessons> groupLessons;
+    private final String version;
     private final String title;
     private final String shortDescription;
     private final URL userRedirectForFeedback;
 
-    public GettingStartedCourse(String title, String shortDescription) {
-        this(title, shortDescription, null);
+    public GettingStartedCourse(String version, String title, String shortDescription) {
+        this(version, title, shortDescription, null);
     }
 
-    public GettingStartedCourse(String title, String shortDescription, URL userRedirectForFeedback) {
+    public GettingStartedCourse(String version, String title, String shortDescription, URL userRedirectForFeedback) {
+        this.version = version;
         this.title = title;
         this.shortDescription = shortDescription;
         this.groupLessons = new ArrayList<>();
@@ -50,5 +52,9 @@ public class GettingStartedCourse {
 
     public URL getUserRedirectForFeedback() {
         return userRedirectForFeedback;
+    }
+
+    public String getVersion() {
+        return version;
     }
 }

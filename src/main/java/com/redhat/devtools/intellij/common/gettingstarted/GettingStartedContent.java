@@ -160,7 +160,7 @@ public class GettingStartedContent extends ContentImpl {
      title
      description
      action buttons
-     gif
+     animated image
      */
     private void fillWithLessonContent(GettingStartedGroupLessons group, GettingStartedLesson lesson, int rowToExpandWhenExitingLesson) {
         emptyMainPanel();
@@ -285,14 +285,14 @@ public class GettingStartedContent extends ContentImpl {
      *  title
      *  description
      *  action buttons
-     *  gif
+     *  animated image
      * @param lesson
      * @return
      */
     private JComponent createLessonContentPanel(GettingStartedLesson lesson) {
         JPanel lessonContentPanel = new JPanel(new BorderLayout());
         lessonContentPanel.add(createTitleDescriptionAndButtonsPanel(lesson), BorderLayout.NORTH);
-        lessonContentPanel.add(createGifPanel(lesson.getGif()), BorderLayout.CENTER);
+        lessonContentPanel.add(createAnimatedImagePanel(lesson.getAnimatedImage()), BorderLayout.CENTER);
         return lessonContentPanel;
     }
 
@@ -355,8 +355,8 @@ public class GettingStartedContent extends ContentImpl {
         return editorPanel;
     }
 
-    private JPanel createGifPanel(URL gifURL) {
-        ImageIcon imgIcon = new ImageIcon(gifURL);
+    private JPanel createAnimatedImagePanel(URL animatedImageURL) {
+        ImageIcon imgIcon = new ImageIcon(animatedImageURL);
         return new JPanel() {
 
             @Override
