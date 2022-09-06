@@ -128,6 +128,7 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
     }
 
     /**
+     * @param enabled the auto new line flag
      * @deprecated use {@link #withEnterKeyDefaultCodeEnabled(boolean)}
      */
     @Deprecated
@@ -141,6 +142,9 @@ public class CommonTerminalExecutionConsole implements ConsoleView, ObservableCo
     }
 
     /**
+     *
+     * @param project the project
+     * @param filter the filter to use
      * @deprecated use {{@link #addMessageFilter(Filter)}} instead
      */
     @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")

@@ -11,7 +11,10 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.NopProcessHandler;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +25,7 @@ import com.pty4j.PtyProcessBuilder;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import com.redhat.devtools.intellij.common.model.ProcessHandlerInput;
 import org.apache.commons.exec.CommandLine;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.output.WriterOutputStream;
@@ -34,6 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -64,6 +69,73 @@ public class ExecHelper {
     SERVICE.submit(runnable);
   }
 
+  private static class ListeningWriterOutputStream extends WriterOutputStream {
+    private final ProcessListener listener;
+    private final Charset charset;
+    private StringWriter writer;
+    private WriterOutputStream stream;
+
+    private ListeningWriterOutputStream(Writer writer, Charset charset, ProcessListener listener) {
+      super(writer, charset);
+      this.charset = charset;
+      this.listener = listener;
+    }
+
+    @Override
+    public void write(byte[] b, int off, int len) throws IOException {
+      super.write(b, off, len);
+      if (listener != null) {
+        String str = new String(b, off, len, charset);
+        listener.onTextAvailable(new ProcessEvent(new NopProcessHandler(), str), ProcessOutputTypes.STDOUT);
+      }
+    }
+  }
+
+  /**
+   * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
+   *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
+   *
+   * @param executable the executable
+   * @param checkExitCode if exit code should be checked
+   * @param workingDirectory the working directory for the process
+   * @param envs the map for the environment variables
+   * @param listener the process listener
+   * @param arguments the arguments
+   * @return the combined output and error stream as a String
+   * @throws IOException if error during process execution
+   */
+  public static String execute(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
+                               ProcessListener listener, String... arguments) throws IOException {
+    DefaultExecutor executor = new DefaultExecutor() {
+      @Override
+      public boolean isFailure(int exitValue) {
+        if (checkExitCode) {
+          return super.isFailure(exitValue);
+        } else {
+          return false;
+        }
+      }
+    };
+    StringWriter writer = new StringWriter();
+    PumpStreamHandler handler = new PumpStreamHandler(new ListeningWriterOutputStream(writer, Charset.defaultCharset(),
+            listener));
+    executor.setStreamHandler(handler);
+    executor.setWorkingDirectory(workingDirectory);
+    CommandLine command = new CommandLine(executable).addArguments(arguments, false);
+    Map<String, String> env = new HashMap<>(System.getenv());
+    env.putAll(envs);
+    try {
+      if (checkExitCode) {
+        executor.execute(command, env);
+      } else {
+        executor.execute(command, env, new DefaultExecuteResultHandler());
+      }
+      return writer.toString();
+    } catch (IOException e) {
+      throw new IOException(e.getLocalizedMessage() + " " + writer.toString(), e);
+    }
+  }
+
   /**
    * This method combine <b>out</b> and <b>err</b> outputs in result string, if you need to have them separately
    *  use @link {@link #executeWithResult(String, boolean, File, Map, String...)}
@@ -78,29 +150,7 @@ public class ExecHelper {
    */
   public static String execute(String executable, boolean checkExitCode, File workingDirectory, Map<String,String> envs,
                                String... arguments) throws IOException {
-    DefaultExecutor executor = new DefaultExecutor() {
-      @Override
-      public boolean isFailure(int exitValue) {
-        if (checkExitCode) {
-          return super.isFailure(exitValue);
-        } else {
-          return false;
-        }
-      }
-    };
-    StringWriter writer = new StringWriter();
-    PumpStreamHandler handler = new PumpStreamHandler(new WriterOutputStream(writer, Charset.defaultCharset()));
-    executor.setStreamHandler(handler);
-    executor.setWorkingDirectory(workingDirectory);
-    CommandLine command = new CommandLine(executable).addArguments(arguments, false);
-    Map<String, String> env = new HashMap<>(System.getenv());
-    env.putAll(envs);
-    try {
-      executor.execute(command, env);
-      return writer.toString();
-    } catch (IOException e) {
-      throw new IOException(e.getLocalizedMessage() + " " + writer.toString(), e);
-    }
+    return execute(executable, checkExitCode, workingDirectory, envs, null, arguments);
   }
 
   /**
@@ -285,6 +335,7 @@ public class ExecHelper {
    * @param title tab title
    * @param waitForProcessExit wait
    * @param command must not be empty (for correct thread attribution in the stacktrace)
+   * @throws IOException if errors while processing
    */
   public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit, String... command) throws IOException {
     linkProcessToTerminal(p, project, title, waitForProcessExit, null, null, command);
@@ -296,8 +347,10 @@ public class ExecHelper {
    * @param project project
    * @param title tab title
    * @param waitForProcessExit wait
+   * @param processHandlerFunction the process handler function
    * @param processListener listener to attach to the process
    * @param command must not be empty (for correct thread attribution in the stacktrace)
+   * @throws IOException if errors while processing
    */
   public static void linkProcessToTerminal(PtyProcess p, Project project, String title, boolean waitForProcessExit,
                                            Function<ProcessHandlerInput, ExecProcessHandler> processHandlerFunction,
@@ -376,7 +429,7 @@ public class ExecHelper {
                                          Function<ProcessHandlerInput, ExecProcessHandler> processHandlerFunction,
                                          ProcessListener processListener, String... command) throws IOException {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      execute(command[0], workingDirectory, envs, Arrays.stream(command)
+      execute(command[0], waitForProcessToExit, workingDirectory, envs, processListener, Arrays.stream(command)
               .skip(1)
               .toArray(String[]::new));
     } else {
