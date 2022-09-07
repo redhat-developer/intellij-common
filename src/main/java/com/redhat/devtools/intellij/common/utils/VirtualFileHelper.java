@@ -41,7 +41,7 @@ public class VirtualFileHelper {
     /**
      * Removes the clutter properties {@link com.redhat.devtools.intellij.common.CommonConstants#metadataClutter} from the given resource.
      *
-     * @param content
+     * @param content the content to clean
      * @return the content without the clutter properties
      *
      * @deprecated
