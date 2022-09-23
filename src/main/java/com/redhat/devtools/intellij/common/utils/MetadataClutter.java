@@ -64,6 +64,17 @@ public class MetadataClutter {
      * @return the content without the clutter properties
      */
     public static String remove(String resource) {
+        return remove(resource, true);
+    }
+
+    /**
+     * Removes clutter properties from the given textual content. Does nothing if the content is {@code null} or empty.
+     *
+     * @param resource where the clutter properties should be removed from
+     * @param minimizeQuotes if, when converting from json to yaml, quotes should be removed if not strictly needed
+     * @return the content without the clutter properties
+     */
+    public static String remove(String resource, boolean minimizeQuotes) {
         if (resource == null
                 || resource.isEmpty()) {
             return resource;
@@ -75,7 +86,7 @@ public class MetadataClutter {
             if (metadata != null) {
                 metadata.remove(properties);
                 contentNode.set(PROPERTY_METADATA, metadata);
-                resource = YAMLHelper.JSONToYAML(contentNode);
+                resource = YAMLHelper.JSONToYAML(contentNode, minimizeQuotes);
             }
         } catch (IOException e) {
             logger.warn(e.getLocalizedMessage(), e);
