@@ -143,4 +143,20 @@ public class MetadataClutterTest extends BaseTest {
         assertThat(metaWithoutClutter).isEqualTo(noClutterResource.getMetadata());
     }
 
+    @Test
+    public void remove_ContentHasMetadataWithoutClutterTagsAndMinimizeQuotes_CleanedContent() throws IOException {
+        String content = load(RESOURCE_PATH + "pipeline_with_clutters_2.yaml");
+        String content_without_clutters = load(RESOURCE_PATH + "pipeline_without_clutters_2_minimize_quotes.yaml");
+        String result = MetadataClutter.remove(content, true);
+        assertEquals(content_without_clutters, result);
+    }
+
+    @Test
+    public void remove_ContentHasMetadataWithoutClutterTagsAndQuotes_CleanedContent() throws IOException {
+        String content = load(RESOURCE_PATH + "pipeline_with_clutters_2.yaml");
+        String content_without_clutters = load(RESOURCE_PATH + "pipeline_without_clutters_2_with_quotes.yaml");
+        String result = MetadataClutter.remove(content, false);
+        assertEquals(content_without_clutters, result);
+    }
+
 }
