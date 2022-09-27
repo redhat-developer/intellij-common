@@ -58,7 +58,7 @@ public class MetadataClutterTest extends BaseTest {
         String content = load(RESOURCE_PATH + "pipeline_with_clutters.yaml");
         String content_without_clutters = load(RESOURCE_PATH + "pipeline_with_no_clutters.yaml");
         JsonNode content_without_clutters_Node = YAMLHelper.YAMLToJsonNode(content_without_clutters);
-        String result = MetadataClutter.remove(content);
+        String result = MetadataClutter.remove(content, false);
         JsonNode result_Node = YAMLHelper.YAMLToJsonNode(result);
         assertEquals(content_without_clutters_Node.get("metadata"), result_Node.get("metadata"));
         assertEquals(content_without_clutters_Node.get("spec"), result_Node.get("spec"));
@@ -147,16 +147,22 @@ public class MetadataClutterTest extends BaseTest {
     public void remove_ContentHasMetadataWithoutClutterTagsAndMinimizeQuotes_CleanedContent() throws IOException {
         String content = load(RESOURCE_PATH + "pipeline_with_clutters_2.yaml");
         String content_without_clutters = load(RESOURCE_PATH + "pipeline_without_clutters_2_minimize_quotes.yaml");
+        JsonNode content_without_clutters_Node = YAMLHelper.YAMLToJsonNode(content_without_clutters);
         String result = MetadataClutter.remove(content, true);
-        assertEquals(content_without_clutters, result);
+        JsonNode result_Node = YAMLHelper.YAMLToJsonNode(result);
+        assertEquals(content_without_clutters_Node.get("metadata"), result_Node.get("metadata"));
+        assertEquals(content_without_clutters_Node.get("spec"), result_Node.get("spec"));
     }
 
     @Test
     public void remove_ContentHasMetadataWithoutClutterTagsAndQuotes_CleanedContent() throws IOException {
         String content = load(RESOURCE_PATH + "pipeline_with_clutters_2.yaml");
         String content_without_clutters = load(RESOURCE_PATH + "pipeline_without_clutters_2_with_quotes.yaml");
+        JsonNode content_without_clutters_Node = YAMLHelper.YAMLToJsonNode(content_without_clutters);
         String result = MetadataClutter.remove(content, false);
-        assertEquals(content_without_clutters, result);
+        JsonNode result_Node = YAMLHelper.YAMLToJsonNode(result);
+        assertEquals(content_without_clutters_Node.get("metadata"), result_Node.get("metadata"));
+        assertEquals(content_without_clutters_Node.get("spec"), result_Node.get("spec"));
     }
 
 }
