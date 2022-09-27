@@ -1,0 +1,17 @@
+apiVersion: "tekton.dev/v1beta1"
+kind: "Pipeline"
+metadata:
+  name: "foo"
+  namespace: "tekton"
+spec:
+  params:
+  - name: "first"
+    description: "the first operand"
+    default: "1"
+  - name: "second"
+    description: "the second operand"
+    default: "1"
+  tasks:
+  - name: "step1"
+    taskRef:
+      name: "task1"
