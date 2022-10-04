@@ -371,6 +371,23 @@ public class ConfigHelperTest {
         assertThat(equal).isFalse();
     }
 
+    @Test
+    public void kubeConfig_and_clientConfig_are_NOT_equal_if_kubeConfig_has_no_current_context() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(
+                null, // no current context
+                allContexts,
+                allUsers);
+        io.fabric8.kubernetes.client.Config clientConfig = clientConfig(
+                "token 42",
+                clone(ctx2),
+                allContexts);
+        // when
+        boolean equal = ConfigHelper.areEqual(kubeConfig, clientConfig);
+        // then
+        assertThat(equal).isFalse();
+    }
+
     private static AuthInfo authInfo(String token, AuthProviderConfig config) {
         AuthInfo authInfo = new AuthInfo();
         authInfo.setAuthProvider(config);
@@ -414,7 +431,7 @@ public class ConfigHelperTest {
             List<NamedContext> contexts,
             List<NamedAuthInfo> users) {
         io.fabric8.kubernetes.api.model.Config config = mock(io.fabric8.kubernetes.api.model.Config.class);
-        doReturn(currentContext.getName())
+        doReturn(currentContext == null? null : currentContext.getName())
                 .when(config).getCurrentContext();
         doReturn(contexts)
                 .when(config).getContexts();
