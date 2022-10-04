@@ -229,8 +229,11 @@ public class ConfigHelper {
     }
 
     private static AuthInfo getAuthInfo(Config kubeConfig) {
-        NamedContext currentContext = KubeConfigUtils.getCurrentContext(kubeConfig);
-        return KubeConfigUtils.getUserAuthInfo(kubeConfig, currentContext.getContext());
+        NamedContext current = KubeConfigUtils.getCurrentContext(kubeConfig);
+        if (current == null) {
+            return null;
+        }
+        return KubeConfigUtils.getUserAuthInfo(kubeConfig, current.getContext());
     }
 
     /**
