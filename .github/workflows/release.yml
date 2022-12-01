@@ -27,8 +27,6 @@ jobs:
           current-tag: ${{ steps.get_version.outputs.VERSION }}
           types-mapping: 'feat:Features,fix:Bug Fixes,docs:Documentation,refactor:Refactoring,build:Builds,chore:Other'
           scopes-mapping: 'UI:UI,Hub:Hub'
-      - run: |
-          echo '${{ steps.changelog.outputs.changelog }}'
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
