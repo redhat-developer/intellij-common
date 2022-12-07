@@ -20,8 +20,8 @@ intellij {
     plugins = ['terminal', 'yaml']
 }
 
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
+sourceCompatibility = '11'
+targetCompatibility = '11'
 
 java {
     withSourcesJar()
@@ -29,9 +29,10 @@ java {
 }
 
 dependencies {
-    compile (
-        'io.fabric8:kubernetes-client:5.12.4',
-        'io.fabric8:openshift-client:5.12.4',
+    implementation (
+        'io.fabric8:kubernetes-client:6.4.0',
+        'io.fabric8:openshift-client:6.4.0',
+        'io.fabric8:kubernetes-httpclient-okhttp:6.4.0',
         'org.apache.commons:commons-exec:1.3',
         'org.apache.commons:commons-lang3:3.12.0'
     )

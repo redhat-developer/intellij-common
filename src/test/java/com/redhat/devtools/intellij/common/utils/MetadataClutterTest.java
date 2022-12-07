@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
@@ -97,7 +98,6 @@ public class MetadataClutterTest extends BaseTest {
                 .withNamespace("wild west")
                 .withLabels(Collections.singletonMap("hat", "cowboy"))
                 // clutter
-                .withClusterName("B movies")
                 .withCreationTimestamp("20th century")
                 .withDeletionGracePeriodSeconds(42L)
                 .withDeletionTimestamp("June 11, 1979")
@@ -110,11 +110,13 @@ public class MetadataClutterTest extends BaseTest {
                 .withResourceVersion("42")
                 .withSelfLink("not too serious")
                 .withUid("42")
+                .withAdditionalProperties(
+                        Map.of("clusterName", "Wild West")
+                )
                 .build();
         // when
         ObjectMeta mangled = MetadataClutter.remove(metadata);
         // then
-        assertThat(mangled.getClusterName()).isNull();
         assertThat(mangled.getCreationTimestamp()).isNull();
         assertThat(mangled.getDeletionGracePeriodSeconds()).isNull();
         assertThat(mangled.getDeletionTimestamp()).isNull();
@@ -125,6 +127,7 @@ public class MetadataClutterTest extends BaseTest {
         assertThat(mangled.getResourceVersion()).isNull();
         assertThat(mangled.getSelfLink()).isNull();
         assertThat(mangled.getUid()).isNull();
+        assertThat(mangled.getAdditionalProperties().get("clusterName")).isNull();
     }
 
     @Test

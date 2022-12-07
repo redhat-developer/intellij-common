@@ -42,7 +42,11 @@ public class MetadataClutter {
     );
 
     private static final List<Consumer<ObjectMeta>> setters = Arrays.asList(
-            metadata -> metadata.setClusterName(null),
+            metadata -> {
+                if (metadata.getAdditionalProperties() != null) {
+                    metadata.getAdditionalProperties().remove("clusterName");
+                }
+            },
             metadata -> metadata.setCreationTimestamp(null),
             metadata -> metadata.setDeletionGracePeriodSeconds(null),
             metadata -> metadata.setDeletionTimestamp(null),
