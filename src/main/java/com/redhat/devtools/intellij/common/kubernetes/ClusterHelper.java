@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2021 Red Hat, Inc.
+ * Copyright (c) 2021-2023 Red Hat, Inc.
  * Distributed under license by Red Hat, Inc. All rights reserved.
  * This program is made available under the terms of the
  * Eclipse Public License v2.0 which accompanies this distribution,
@@ -10,13 +10,17 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.kubernetes;
 
-import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientBuilder;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.openshift.client.OpenShiftClient;
 
 public class ClusterHelper {
+
+    private ClusterHelper() {
+        //avoid instanciation
+    }
 
     public static ClusterInfo getClusterInfo(KubernetesClient client) {
         if (client instanceof OpenShiftClient) {
@@ -25,7 +29,7 @@ public class ClusterHelper {
                     true,
                     getOpenShiftVersion((OpenShiftClient) client));
 
-        } else if (Boolean.TRUE.equals(client.isAdaptable(OpenShiftClient.class))){
+        } else if (client.adapt(OpenShiftClient.class) != null && client.adapt(OpenShiftClient.class).isSupported()){
             return new ClusterInfo(
                     getKubernetesVersion(client),
                     true,
@@ -40,7 +44,8 @@ public class ClusterHelper {
     }
 
     private static String getKubernetesVersion(OpenShiftClient client) {
-        try (KubernetesClient kclient = new DefaultKubernetesClient((client.getConfiguration()))) {
+        try {
+            KubernetesClient kclient = new KubernetesClientBuilder().withConfig(client.getConfiguration()).build();
             return getKubernetesVersion(kclient);
         } catch (KubernetesClientException e) {
             return null;
@@ -48,12 +53,13 @@ public class ClusterHelper {
     }
 
     private static String getKubernetesVersion(KubernetesClient client) {
-        VersionInfo version = client.getVersion();
+        VersionInfo version = client.getKubernetesVersion();
         return version != null ? version.getGitVersion() : "";
     }
 
     private static String getOpenShiftVersion(KubernetesClient client) {
-        try (OpenShiftClient oclient = client.adapt(OpenShiftClient.class)) {
+        try {
+            OpenShiftClient oclient = client.adapt(OpenShiftClient.class);
             return getOpenShiftVersion(oclient);
         } catch (KubernetesClientException e) {
             return null;
