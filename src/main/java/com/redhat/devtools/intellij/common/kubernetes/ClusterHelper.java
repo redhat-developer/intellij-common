@@ -29,7 +29,7 @@ public class ClusterHelper {
                     true,
                     getOpenShiftVersion((OpenShiftClient) client));
 
-        } else if (client.adapt(OpenShiftClient.class).isSupported()){
+        } else if (client.adapt(OpenShiftClient.class) != null && client.adapt(OpenShiftClient.class).isSupported()){
             return new ClusterInfo(
                     getKubernetesVersion(client),
                     true,
