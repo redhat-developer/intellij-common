@@ -31,7 +31,7 @@ public class ConfigHelper {
     private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
 
     public static String getKubeConfigPath() {
-        return System.getProperty("user.home") + "/.kube/config";
+        return io.fabric8.kubernetes.client.Config.getKubeconfigFilename();
     }
 
     public static void saveKubeConfig(Config config) throws IOException {
