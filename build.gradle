@@ -1,6 +1,6 @@
 
 plugins {
-    id "org.jetbrains.intellij" version "1.5.2"
+    id "org.jetbrains.intellij" version "1.13.3"
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 }
@@ -45,7 +45,7 @@ dependencies {
 
 task packageTests(type: Jar) {
     from sourceSets.test.output
-    classifier = 'test'
+    archiveClassifier = 'test'
 }
 
 group 'com.redhat.devtools.intellij'
