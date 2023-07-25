@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardWatchEventKinds;
@@ -66,7 +67,8 @@ public class ConfigWatcher implements Runnable {
             while ((key = service.take()) != null) {
                 key.pollEvents().stream()
                         .filter(this::isConfigPath)
-                        .forEach((Void) -> runnable.run());
+                        .filter(this::isValid)
+                        .forEach(Void -> runnable.run());
                 key.reset();
             }
         } catch (IOException | InterruptedException e) {
@@ -94,6 +96,26 @@ public class ConfigWatcher implements Runnable {
         Path path = getWatchedPath().resolve((Path) event.context());
         return path.equals(config);
     }
+
+	/**
+	 * Returns {@code true} if the path (to the kube config file) in the given event
+	 * <ul>
+	 *     <li>exists and</li>
+	 *     <li>is not empty</li>
+	 * </ul>
+	 *
+	 * @param event the WatchEvent to get the path to the kube config from
+	 * @return returns true if the kube config that the event points to exists and is not empty
+	 */
+	protected boolean isValid(WatchEvent<?> event) {
+		Path path = getWatchedPath().resolve((Path) event.context());
+		try {
+			return Files.exists(path) && Files.size(path) > 0;
+		} catch (IOException e) {
+			// do nothing
+		}
+		return true;
+	}
 
     private Path getWatchedPath() {
         return config.getParent();
