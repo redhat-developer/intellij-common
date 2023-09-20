@@ -1,6 +1,23 @@
+buildscript {
+    ext.ideaVersion = ideaVersion
+    /*
+     * for more complex conversion ideaVersion -> sinceIdeaBuild
+     * see https://github.com/rhdunn/xquery-intellij-plugin/blob/master/build.gradle#L1-L47
+     */
+    def since = ideaVersion =~ /IC-20(\d\d)\.([1-3])(\.\d+)?$/
+    if (since.matches()) {
+        ext.sinceIdeaBuild = "${since.group(1)}${since.group(2)}".toInteger()
+    }
+
+    if (ext.sinceIdeaBuild >= 223) {
+        ext.java_version = "17"
+    } else {
+        ext.java_version = "11"
+    }
+}
 
 plugins {
-    id "org.jetbrains.intellij" version "1.13.3"
+    id "org.jetbrains.intellij" version "1.15.0"
     id 'maven-publish'
     id 'io.github.gradle-nexus.publish-plugin' version '1.1.0'
 }
@@ -20,8 +37,12 @@ intellij {
     plugins = ['terminal', 'yaml']
 }
 
-sourceCompatibility = '11'
-targetCompatibility = '11'
+configurations {
+    compileOptions {
+        sourceCompatibility = java_version
+        targetCompatibility = java_version
+    }
+}
 
 java {
     withSourcesJar()
@@ -30,16 +51,16 @@ java {
 
 dependencies {
     implementation (
-        'io.fabric8:kubernetes-client:6.4.0',
-        'io.fabric8:openshift-client:6.4.0',
-        'io.fabric8:kubernetes-httpclient-okhttp:6.4.0',
-        'org.apache.commons:commons-exec:1.3',
-        'org.apache.commons:commons-lang3:3.12.0',
-        'com.twelvemonkeys.common:common-lang:3.9.4'
+            'io.fabric8:kubernetes-client:6.4.0',
+            'io.fabric8:openshift-client:6.4.0',
+            'io.fabric8:kubernetes-httpclient-okhttp:6.4.0',
+            'org.apache.commons:commons-exec:1.3',
+            'org.apache.commons:commons-lang3:3.12.0',
+            'com.twelvemonkeys.common:common-lang:3.9.4'
     )
     testImplementation(
-        'org.assertj:assertj-core:3.17.1',
-        'org.mockito:mockito-inline:3.7.0'
+            'org.assertj:assertj-core:3.17.1',
+            'org.mockito:mockito-inline:3.7.0'
     )
 }
 
