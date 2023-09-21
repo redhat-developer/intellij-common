@@ -45,8 +45,9 @@ public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
             }
             if (path.getLastPathComponent() == treeModel.getRoot()) {
                 invalidateRoot();
+            } else {
+                treeModel.invalidate(path, true);
             }
-            treeModel.invalidate(path, true);
         });
     }
 
