@@ -60,7 +60,7 @@ dependencies {
     )
     testImplementation(
             'org.assertj:assertj-core:3.17.1',
-            'org.mockito:mockito-inline:3.7.0'
+            'org.mockito:mockito-inline:5.2.0'
     )
 }
 

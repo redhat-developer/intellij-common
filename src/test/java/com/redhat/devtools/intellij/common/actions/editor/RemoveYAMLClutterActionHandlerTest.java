@@ -88,7 +88,7 @@ public class RemoveYAMLClutterActionHandlerTest extends ActionTest {
         try(MockedStatic<VirtualFileHelper> virtualFileHelperMockedStatic = mockStatic(VirtualFileHelper.class)) {
             virtualFileHelperMockedStatic.when(() -> VirtualFileHelper.cleanContent(anyString())).thenReturn("");
             removeYAMLClutterActionHandler.getUpdatedContent("", "");
-            virtualFileHelperMockedStatic.verify( times(1), () -> VirtualFileHelper.cleanContent(anyString()));
+            virtualFileHelperMockedStatic.verify( () -> VirtualFileHelper.cleanContent(anyString()), times(1));
         }
     }
 
