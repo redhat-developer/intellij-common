@@ -72,6 +72,9 @@ public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
 
     private void processLabel(@NotNull PresentationData presentation) {
         String text = label.get();
+        if (text == null) {
+            return;
+        }
         Matcher matcher = HREF_PATTERN.matcher(text);
         if (matcher.find()) {
             int prev = 0;
@@ -89,7 +92,7 @@ public class LabelAndIconDescriptor<T> extends PresentableNodeDescriptor<T> {
             }
 
         } else {
-            presentation.setPresentableText(label.get());
+            presentation.setPresentableText(text);
         }
     }
 
