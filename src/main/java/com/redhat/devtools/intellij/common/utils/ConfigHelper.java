@@ -77,7 +77,11 @@ public class ConfigHelper {
     }
 
     public static ToolsConfig loadToolsConfig(URL url) throws IOException {
-        return mapper.readValue(url, ToolsConfig.class);
+        try {
+            return mapper.readValue(url, ToolsConfig.class);
+        } catch (IOException e) {
+            throw new IOException("Could not load tools config at " + url.toString() + ": " + e.getMessage(), e);
+        }
     }
 
     public static NamedContext getCurrentContext() {
