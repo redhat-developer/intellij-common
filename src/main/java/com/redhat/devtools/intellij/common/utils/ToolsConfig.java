@@ -18,6 +18,8 @@ import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ToolsConfig {
+
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Tool {
     private Map<String, Platform> platforms = new HashMap<>();
 
@@ -85,6 +87,7 @@ public class ToolsConfig {
     }
   }
 
+  @JsonIgnoreProperties(ignoreUnknown = true)
   public static class Platform {
     private URL url;
     private String cmdFileName;

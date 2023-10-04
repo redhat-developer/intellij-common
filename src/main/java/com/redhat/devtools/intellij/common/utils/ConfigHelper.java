@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import io.fabric8.kubernetes.api.model.AuthInfo;
