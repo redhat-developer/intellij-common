@@ -143,6 +143,31 @@ public class ConfigHelper {
     }
 
     /**
+     * Returns {@code true} if the given {@link io.fabric8.kubernetes.api.model.Config} and
+     * (client runtime) {@link io.fabric8.kubernetes.client.Config} are equal. They are considered equal if they're
+     * equal in
+     * <ul>
+     *     <li>current context (cluster, user, current namespace, extensions)</li>
+     *     <li>(existing) contexts</li>
+     *     <li>(authentication) token</li>
+     * </ul>
+     *
+     * @param thisConfig the first (file) config to compare
+     * @param thatConfig the second (file) config to compare
+     * @return true if both configs are equal in context, contexts and token
+     */
+    public static boolean areEqual(Config thisConfig, Config thatConfig) {
+        if (thisConfig == null) {
+            return thatConfig == null;
+        } else if (thatConfig == null) {
+            return false;
+        }
+        return areEqual(KubeConfigUtils.getCurrentContext(thisConfig), KubeConfigUtils.getCurrentContext(thatConfig))
+                && areEqual(thisConfig.getContexts(), thatConfig.getContexts())
+                && areEqualToken(getAuthInfo(thisConfig), getAuthInfo(thatConfig));
+    }
+
+    /**
      * Returns {@code true} if both given contexts are equal. They are considered equal if they're equal in
      * <ul>
      *     <li>cluster</li>
