@@ -11,9 +11,11 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import io.fabric8.kubernetes.api.model.AuthInfo;
+import io.fabric8.kubernetes.api.model.AuthInfoBuilder;
 import io.fabric8.kubernetes.api.model.AuthProviderConfig;
 import io.fabric8.kubernetes.api.model.Context;
 import io.fabric8.kubernetes.api.model.NamedAuthInfo;
+import io.fabric8.kubernetes.api.model.NamedAuthInfoBuilder;
 import io.fabric8.kubernetes.api.model.NamedContext;
 import io.fabric8.kubernetes.client.Config;
 import org.junit.Test;
@@ -285,6 +287,104 @@ public class ConfigHelperTest {
     }
 
     @Test
+    public void kubeConfig1_and_kubeConfig2_are_equal_if_same_in_currentContext_contexts_and_provider_token() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig1 = kubeConfig(
+                ctx2,
+                allContexts,
+                allUsers);
+        io.fabric8.kubernetes.api.model.Config kubeConfig2 = kubeConfig(
+                clone(ctx2),
+                clone(allContexts),
+                clone(allUsers));
+        // when
+        boolean equal = ConfigHelper.areEqual(kubeConfig1, kubeConfig2);
+        // then
+        assertThat(equal).isTrue();
+    }
+
+    @Test
+    public void kubeConfig1_and_kubeConfig2_are_NOT_equal_if_NOT_same_in_currentContext() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig1 = kubeConfig(
+                ctx2,
+                allContexts,
+                allUsers);
+        io.fabric8.kubernetes.api.model.Config kubeConfig2 = kubeConfig(
+                clone(ctx3),
+                clone(allContexts),
+                clone(allUsers));
+        // when
+        boolean equal = ConfigHelper.areEqual(kubeConfig1, kubeConfig2);
+        // then
+        assertThat(equal).isFalse();
+    }
+
+    @Test
+    public void kubeConfig1_and_kubeConfig2_are_NOT_equal_if_contexts_has_additional_member() {
+        // given
+        List<NamedContext> allContextsWithAddition = new ArrayList<>(allContexts);
+        allContextsWithAddition.add(ctx4);
+        io.fabric8.kubernetes.api.model.Config kubeConfig1 = kubeConfig(
+                ctx2,
+                allContextsWithAddition,
+                allUsers);
+        io.fabric8.kubernetes.api.model.Config kubeConfig2 = kubeConfig(
+                clone(ctx2),
+                clone(allContexts),
+                clone(allUsers));
+        // when
+        boolean equal = ConfigHelper.areEqual(kubeConfig1, kubeConfig2);
+        // then
+        assertThat(equal).isFalse();
+    }
+
+    @Test
+    public void kubeConfig1_and_kubeConfig2_are_NOT_equal_if_token_is_different() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig1 = kubeConfig(
+                ctx2,
+                allContexts,
+                allUsers);
+
+        String currentUserName = ctx2.getContext().getUser();
+        NamedAuthInfo currentUser = allUsers.stream()
+                .filter(user -> user.getName().equals(currentUserName))
+                .findFirst()
+                .get();
+        NamedAuthInfo currentUserClone = clone(currentUser);
+        List<NamedAuthInfo> allUsersClone = clone(allUsers);
+        int index = allUsersClone.indexOf(currentUserClone);
+        allUsersClone.set(index, currentUserClone);
+        currentUserClone.getUser().setToken("token 42");
+        io.fabric8.kubernetes.api.model.Config kubeConfig2 = kubeConfig(
+                clone(ctx2),
+                clone(allContexts),
+                allUsersClone);
+        // when
+        boolean equal = ConfigHelper.areEqual(kubeConfig1, kubeConfig2);
+        // then
+        assertThat(equal).isFalse();
+    }
+
+    @Test
+    public void kubeConfig1_and_kubeConfig2_are_NOT_equal_if_kubeConfig2_has_no_current_context() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig1 = kubeConfig(
+                ctx2,
+                allContexts,
+                allUsers);
+        io.fabric8.kubernetes.api.model.Config kubeConfig2 = kubeConfig(
+                null, // no current context
+                allContexts,
+                allUsers);
+        // when
+        boolean equal = ConfigHelper.areEqual(kubeConfig1, kubeConfig2);
+        // then
+        assertThat(equal).isFalse();
+    }
+
+    @Test
     public void kubeConfig_and_clientConfig_are_equal_if_same_in_currentContext_contexts_and_provider_token() {
         // given
         io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(
@@ -454,6 +554,16 @@ public class ConfigHelperTest {
                         context.getNamespace(),
                         context.getUser()),
                 namedContext.getName());
+    }
+
+    private static NamedAuthInfo clone(NamedAuthInfo user) {
+        return new NamedAuthInfoBuilder(user).build();
+    }
+
+    private static List<NamedAuthInfo> clone(Collection<NamedAuthInfo> users) {
+        return users.stream()
+                .map(user -> new NamedAuthInfoBuilder(user).build())
+                .collect(Collectors.toList());
     }
 
     private static NamedAuthInfo getUser(NamedContext context, Collection<NamedAuthInfo> users) {
