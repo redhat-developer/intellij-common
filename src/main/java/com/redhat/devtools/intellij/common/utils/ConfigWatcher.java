@@ -49,9 +49,7 @@ public class ConfigWatcher implements Runnable {
     @Override
     public void run() {
         runOnConfigChange((Config config) -> {
-            if (config != null) {
-                listener.onUpdate(this, config);
-            }
+            listener.onUpdate(this, config);
         });
     }
 
