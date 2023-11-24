@@ -16,10 +16,21 @@ import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.openshift.client.OpenShiftClient;
 
+import java.net.HttpURLConnection;
+
 public class ClusterHelper {
 
     private ClusterHelper() {
         //avoid instanciation
+    }
+
+    public static boolean isOpenShift(KubernetesClient client) {
+        OpenShiftClient osClient = client.adapt(OpenShiftClient.class);
+        try {
+            return osClient.isSupported();
+        } catch (KubernetesClientException e) {
+            return e.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED;
+        }
     }
 
     public static ClusterInfo getClusterInfo(KubernetesClient client) {
