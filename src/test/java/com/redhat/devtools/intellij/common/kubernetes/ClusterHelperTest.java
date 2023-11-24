@@ -11,13 +11,19 @@
 package com.redhat.devtools.intellij.common.kubernetes;
 
 import io.fabric8.kubernetes.client.KubernetesClient;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.VersionInfo;
 import io.fabric8.openshift.client.OpenShiftClient;
 import org.junit.Test;
 
+import java.net.HttpURLConnection;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -69,4 +75,48 @@ public class ClusterHelperTest {
         assertTrue(info.isOpenshift());
         assertEquals("4.7.0", info.getOpenshiftVersion());
     }
+
+    @Test
+    public void isOpenShift_should_return_true_if_isSupported() {
+        // given
+        OpenShiftClient oclient = mock(OpenShiftClient.class);
+        doReturn(true)
+                .when(oclient).isSupported();
+        KubernetesClient client = mock(KubernetesClient.class);
+        when(client.adapt(OpenShiftClient.class)).thenReturn(oclient);
+        // when
+        boolean isOpenShift = ClusterHelper.isOpenShift(client);
+        // then
+        assertThat(isOpenShift).isTrue();
+    }
+
+    @Test
+    public void isOpenShift_should_return_false_if_isSupported_throws() {
+        // given
+        OpenShiftClient oclient = mock(OpenShiftClient.class);
+        doThrow(KubernetesClientException.class)
+                .when(oclient).isSupported();
+        KubernetesClient client = mock(KubernetesClient.class);
+        when(client.adapt(OpenShiftClient.class)).thenReturn(oclient);
+        // when
+        boolean isOpenShift = ClusterHelper.isOpenShift(client);
+        // then
+        assertThat(isOpenShift).isFalse();
+    }
+
+    @Test
+    public void isOpenShift_should_return_true_if_isSupported_throws_unauthorized() {
+        // given
+        OpenShiftClient oclient = mock(OpenShiftClient.class);
+        KubernetesClientException e = new KubernetesClientException("ouch", HttpURLConnection.HTTP_UNAUTHORIZED, null);
+        doThrow(e)
+                .when(oclient).isSupported();
+        KubernetesClient client = mock(KubernetesClient.class);
+        when(client.adapt(OpenShiftClient.class)).thenReturn(oclient);
+        // when
+        boolean isOpenShift = ClusterHelper.isOpenShift(client);
+        // then
+        assertThat(isOpenShift).isTrue();
+    }
+
 }
