@@ -11,7 +11,6 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import io.fabric8.kubernetes.api.model.AuthInfo;
-import io.fabric8.kubernetes.api.model.AuthInfoBuilder;
 import io.fabric8.kubernetes.api.model.AuthProviderConfig;
 import io.fabric8.kubernetes.api.model.Context;
 import io.fabric8.kubernetes.api.model.NamedAuthInfo;
@@ -486,6 +485,60 @@ public class ConfigHelperTest {
         boolean equal = ConfigHelper.areEqual(kubeConfig, clientConfig);
         // then
         assertThat(equal).isFalse();
+    }
+
+    @Test
+    public void getCurrentContext_should_return_current_context() {
+        // given
+        NamedContext currentContext = ctx3;
+        io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(
+                currentContext,
+                allContexts,
+                allUsers);
+        // when
+        NamedContext currentFoundInFile = ConfigHelper.getCurrentContext(kubeConfig);
+        // then
+        assertThat(currentFoundInFile).isEqualTo(currentContext);
+    }
+
+    @Test
+    public void getCurrentContext_should_return_null_if_there_is_no_current_context() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(
+                null,
+                allContexts,
+                allUsers);
+        // when
+        NamedContext currentFoundInFile = ConfigHelper.getCurrentContext(kubeConfig);
+        // then
+        assertThat(currentFoundInFile).isNull();
+    }
+
+    @Test
+    public void getCurrentContextName_should_return_name_of_current_context() {
+        // given
+        NamedContext currentContext = ctx3;
+        io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(
+                currentContext,
+                allContexts,
+                allUsers);
+        // when
+        String currentContextName = ConfigHelper.getCurrentContextName(kubeConfig);
+        // then
+        assertThat(currentContextName).isEqualTo(currentContext.getName());
+    }
+
+    @Test
+    public void getCurrentContextName_should_return_null_if_there_is_no_current_context() {
+        // given
+        io.fabric8.kubernetes.api.model.Config kubeConfig = kubeConfig(
+                null,
+                allContexts,
+                allUsers);
+        // when
+        String currentContext = ConfigHelper.getCurrentContextName(kubeConfig);
+        // then
+        assertThat(currentContext).isNull();
     }
 
     private static AuthInfo authInfo(String token, AuthProviderConfig config) {

@@ -88,7 +88,32 @@ public class ConfigHelper {
     public static NamedContext getCurrentContext() {
         try {
             Config config = loadKubeConfig();
-            return KubeConfigUtils.getCurrentContext(config);
+            return getCurrentContext(config);
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public static NamedContext getCurrentContext(Config config) {
+        if (config == null) {
+            return null;
+        }
+        return KubeConfigUtils.getCurrentContext(config);
+    }
+
+    public static String getCurrentContextName(Config config) {
+        String current = null;
+        NamedContext currentContext = getCurrentContext(config);
+        if (currentContext != null
+                && currentContext.getName() != null) {
+            current = currentContext.getName();
+        }
+        return current;
+    }
+
+    public static String getCurrentContextName() {
+        try {
+            return getCurrentContextName(loadKubeConfig());
         } catch (IOException e) {
             return null;
         }
