@@ -30,7 +30,7 @@ public class CommonConstants {
      *
      * @deprecated since 1.8.0, use {@link MetadataClutter#properties} instead
      */
-    @Deprecated
+    @Deprecated (since = "1.8.0")
     public static final List<String> metadataClutter = Arrays.asList(
             "clusterName",
             "creationTimestamp",
