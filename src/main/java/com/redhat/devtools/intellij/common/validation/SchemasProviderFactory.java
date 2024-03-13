@@ -11,11 +11,16 @@
 package com.redhat.devtools.intellij.common.validation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
 import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,10 +30,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class SchemasProviderFactory implements JsonSchemaProviderFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SchemasProviderFactory.class);
@@ -43,9 +44,9 @@ public class SchemasProviderFactory implements JsonSchemaProviderFactory {
         try (InputStream list = SchemasProviderFactory.class.getResourceAsStream("/schemas/index.properties")) {
             if (list != null) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(list, StandardCharsets.UTF_8))) {
-                    reader.lines().filter(line -> StringUtils.isNotBlank(line)).forEach(line -> {
-                        loadSchema(line);
-                    });
+                    reader.lines()
+                            .filter(line -> !StringUtil.isEmptyOrSpaces(line))
+                            .forEach(this::loadSchema);
                 }
             }
         } catch (IOException e) {

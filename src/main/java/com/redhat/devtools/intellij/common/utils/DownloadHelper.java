@@ -11,12 +11,11 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.HttpRequests;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import com.twelvemonkeys.lang.Platform;
@@ -28,7 +27,6 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
@@ -45,10 +43,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DownloadHelper {
@@ -60,9 +56,9 @@ public class DownloadHelper {
         }
     });
 
-    private static final UnaryOperator<InputStream> UNTAR = (input ->  new TarArchiveInputStream(input));
+    private static final UnaryOperator<InputStream> UNTAR = (TarArchiveInputStream::new);
 
-    private static final UnaryOperator<InputStream> UNZIP = (input ->  new ZipArchiveInputStream(input));
+    private static final UnaryOperator<InputStream> UNZIP = (ZipArchiveInputStream::new);
 
     private static final Map<String, UnaryOperator<InputStream>> MAPPERS = new HashMap<>();
 
@@ -223,15 +219,15 @@ public class DownloadHelper {
 
     private boolean isDownloadAllowed(String tool, String currentVersion, String requiredVersion) {
         return UIHelper.executeInUI(() ->
-          Messages.showYesNoCancelDialog(StringUtils.isEmpty(currentVersion) ? tool + " not found , do you want to download " + tool + " " + requiredVersion + " ?" : tool + " " + currentVersion + " found, required version is " + requiredVersion + ", do you want to download " + tool + " ?", tool + " tool required", Messages.getQuestionIcon()) == Messages.YES);
+          Messages.showYesNoCancelDialog(StringUtil.isEmpty(currentVersion) ? tool + " not found , do you want to download " + tool + " " + requiredVersion + " ?" : tool + " " + currentVersion + " found, required version is " + requiredVersion + ", do you want to download " + tool + " ?", tool + " tool required", Messages.getQuestionIcon()) == Messages.YES);
     }
 
     private boolean areCompatible(String version, String versionMatchRegExpr) {
         boolean compatible = true;
-        if (StringUtils.isNotBlank(versionMatchRegExpr)) {
+        if (!StringUtil.isEmptyOrSpaces(versionMatchRegExpr)) {
             Pattern pattern = Pattern.compile(versionMatchRegExpr);
             compatible = pattern.matcher(version).matches();
-        } else if (StringUtils.isBlank(version)) {
+        } else if (StringUtil.isEmptyOrSpaces(version)) {
             compatible = false;
         }
         return compatible;
@@ -245,12 +241,13 @@ public class DownloadHelper {
             String output = ExecHelper.execute(platform.getCmdFileName(), false, arguments);
             try (BufferedReader reader = new BufferedReader(new StringReader(output))) {
                 version = reader.lines().
-                        map(line -> pattern.matcher(line)).
-                        filter(matcher -> matcher.matches()).
+                        map(pattern::matcher).
+                        filter(Matcher::matches).
                         map(matcher -> matcher.group(1)).
                         findFirst().orElse("");
             }
         } catch (IOException e) {
+          // swallow
         }
         return version;
 

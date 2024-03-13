@@ -10,14 +10,21 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ApplicationManager;
 
+import javax.swing.LookAndFeel;
 import javax.swing.UIManager;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.function.Supplier;
 
 public class UIHelper {
+
+  private static final Collection<String> DARK_THEMES = Arrays.asList(
+    "Darcula",
+    "Dark",
+    "High contrast");
+
   public static void executeInUI(Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       runnable.run();
@@ -37,7 +44,10 @@ public class UIHelper {
   }
 
   public static boolean isDarkMode() {
-    UIManager.LookAndFeelInfo lafInfo = LafManager.getInstance().getCurrentLookAndFeel();
-    return lafInfo != null && lafInfo.getClassName().equals(DarculaLaf.class.getName());
+    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
+    if (lookAndFeel == null) {
+      return false;
+    }
+    return DARK_THEMES.contains(lookAndFeel.getName());
   }
 }
