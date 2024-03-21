@@ -51,9 +51,10 @@ java {
 
 dependencies {
     implementation (
-        'io.fabric8:kubernetes-client:6.4.1',
-        'io.fabric8:openshift-client:6.4.1',
-        'io.fabric8:kubernetes-httpclient-okhttp:6.4.1',
+        'io.fabric8:kubernetes-client:6.12.0',
+        'io.fabric8:openshift-client:6.12.0',
+        'io.fabric8:kubernetes-httpclient-okhttp:6.12.0',
+        'com.fasterxml.jackson.core:jackson-core:2.17.0', /* IC-2022.3 ships 2.16.0 */
         'org.apache.commons:commons-exec:1.3',
         'org.apache.commons:commons-lang3:3.12.0',
         'com.twelvemonkeys.common:common-lang:3.9.4'
@@ -61,7 +62,7 @@ dependencies {
     testImplementation(
         'org.assertj:assertj-core:3.17.1',
         'org.mockito:mockito-inline:5.2.0',
-        'org.yaml:snakeyaml:1.33' /* IC-2023.2 provides incompatible 2.0 */
+        'com.fasterxml.jackson.core:jackson-core:2.17.0', /* IC-2022.3 ships 2.16.0 */
     )
 }
 
