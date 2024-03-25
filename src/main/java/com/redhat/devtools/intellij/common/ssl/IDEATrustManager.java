@@ -12,7 +12,6 @@ package com.redhat.devtools.intellij.common.ssl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.ssl.CertificateManager;
-import nl.altindag.ssl.trustmanager.CompositeX509ExtendedTrustManager;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import javax.net.ssl.X509ExtendedTrustManager;
@@ -134,7 +133,9 @@ public class IDEATrustManager {
         if (!(object instanceof List))
             return;
         List<X509TrustManager> managers = (List<X509TrustManager>) object;
-        List<X509TrustManager> nonCompositeManagers = managers.stream().filter(x509TrustManager -> !(x509TrustManager instanceof CompositeX509ExtendedTrustManager)).collect(Collectors.toList());
+        List<X509TrustManager> nonCompositeManagers = managers.stream()
+          .filter(x509TrustManager -> !(x509TrustManager instanceof CompositeX509ExtendedTrustManager))
+          .collect(Collectors.toList());
         CompositeX509ExtendedTrustManager clientTrustManager = new CompositeX509ExtendedTrustManager(new ArrayList<>(trustManagers));
         managers.clear();
         managers.addAll(nonCompositeManagers);

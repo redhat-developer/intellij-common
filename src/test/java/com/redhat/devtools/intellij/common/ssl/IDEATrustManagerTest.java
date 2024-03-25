@@ -19,7 +19,6 @@ import java.util.Optional;
 import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 
-import nl.altindag.ssl.trustmanager.CompositeX509ExtendedTrustManager;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertTrue;
