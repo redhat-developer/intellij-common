@@ -12,7 +12,6 @@ package com.redhat.devtools.intellij.common.ssl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.net.ssl.CertificateManager;
-import nl.altindag.ssl.trustmanager.CompositeX509ExtendedTrustManager;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
 import javax.net.ssl.X509ExtendedTrustManager;
