@@ -25,12 +25,7 @@ public class ClusterHelper {
     }
 
     public static boolean isOpenShift(KubernetesClient client) {
-        OpenShiftClient osClient = client.adapt(OpenShiftClient.class);
-        try {
-            return osClient.isSupported();
-        } catch (KubernetesClientException e) {
-            return e.getCode() == HttpURLConnection.HTTP_UNAUTHORIZED;
-        }
+        return client.hasApiGroup(OpenShiftClient.BASE_API_GROUP, false);
     }
 
     public static ClusterInfo getClusterInfo(KubernetesClient client) {
