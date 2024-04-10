@@ -11,6 +11,8 @@
 package com.redhat.devtools.intellij.common.actions;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
@@ -36,5 +38,10 @@ public abstract class StructureTreeAction extends TreeAction {
     @Override
     protected Object adjust(Object selected) {
         return getElement(selected);
+    }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
     }
 }
