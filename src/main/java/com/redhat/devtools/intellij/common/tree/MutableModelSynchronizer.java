@@ -24,11 +24,11 @@ import java.util.Enumeration;
 import java.util.function.Supplier;
 
 public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
-    protected final StructureTreeModel treeModel;
+    protected final StructureTreeModel<? extends AbstractTreeStructure> treeModel;
     private final AbstractTreeStructure structure;
     private final MutableModel<T> mutableModel;
 
-    public MutableModelSynchronizer(StructureTreeModel treeModel,
+    public MutableModelSynchronizer(StructureTreeModel<? extends AbstractTreeStructure> treeModel,
                                     AbstractTreeStructure structure,
                                     MutableModel<T> mutableModel) {
         this.treeModel = treeModel;
@@ -52,7 +52,7 @@ public class MutableModelSynchronizer<T> implements MutableModel.Listener<T> {
     }
 
     private void invalidateRoot() {
-        treeModel.invalidate();
+        treeModel.invalidateAsync();
     }
 
     private T getParentElement(T element) {

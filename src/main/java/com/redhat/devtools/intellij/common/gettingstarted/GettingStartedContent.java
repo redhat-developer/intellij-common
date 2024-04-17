@@ -510,7 +510,7 @@ public class GettingStartedContent extends ContentImpl {
         titlePanel.add(lessonTitleLabel);
 
         if (hasFocus) {
-            titlePanel.setBackground(JBUI.CurrentTheme.StatusBar.hoverBackground());
+            titlePanel.setBackground(JBUI.CurrentTheme.StatusBar.Widget.HOVER_BACKGROUND);
         }
 
         return titlePanel;
