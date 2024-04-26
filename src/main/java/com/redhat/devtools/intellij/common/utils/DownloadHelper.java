@@ -121,8 +121,8 @@ public class DownloadHelper {
          * @return the command path
          * @throws IOException if the tool was not found in the config file
          */
-    private CompletableFuture<String> downloadIfRequiredAsyncInner(String toolName, URL url) throws IOException {
-        CompletableFuture<String> result = new CompletableFuture<>();
+    private CompletableFuture<ToolInstance> downloadIfRequiredAsyncInner(String toolName, URL url) throws IOException {
+        CompletableFuture<ToolInstance> result = new CompletableFuture<>();
         ToolsConfig config = ConfigHelper.loadToolsConfig(url);
         ToolsConfig.Tool tool = config.getTools().get(toolName);
         if (tool == null) {
@@ -140,12 +140,11 @@ public class DownloadHelper {
             if (!Files.exists(path)) {
                 downloadInBackground(toolName, platform, path, cmd, tool, version, result);
             } else {
-                result.complete(cmd);
+                result.complete(new ToolInstance(cmd, false));
             }
         } else {
-            result.complete(command);
+            result.complete(new ToolInstance(command, false));
         }
-
         return result;
     }
 
@@ -159,7 +158,7 @@ public class DownloadHelper {
 
     }
 
-    private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, CompletableFuture<String> result) {
+    private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, CompletableFuture<ToolInstance> result) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
             downloadInBackgroundManager(toolName, platform, path, cmd, result);
         } else {
@@ -167,13 +166,13 @@ public class DownloadHelper {
                 if (tool.isSilentMode() || isDownloadAllowed(toolName, version, tool.getVersion())) {
                     downloadInBackgroundManager(toolName, platform, path, cmd, result);
                 } else {
-                    result.complete(platform.getCmdFileName());
+                    result.complete(new ToolInstance(platform.getCmdFileName(), false));
                 }
             });
         }
     }
 
-    private void downloadInBackgroundManager(String toolName, ToolsConfig.Platform platform, Path path, String cmd, CompletableFuture<String> result) {
+    private void downloadInBackgroundManager(String toolName, ToolsConfig.Platform platform, Path path, String cmd, CompletableFuture<ToolInstance> result) {
         final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
         ProgressManager.getInstance().run(new Task.Backgroundable(null, "Downloading " + toolName, false) {
             @Override
@@ -184,22 +183,22 @@ public class DownloadHelper {
                         uncompress(dlFilePath, path);
                         return cmd;
                     });
-                } catch (IOException ignored) {
-                    result.completeExceptionally(new IOException("Error while setting tool " + toolName + "."));
+                } catch (IOException e) {
+                    result.completeExceptionally(new IOException("Error while setting tool " + toolName + ".", e));
                 }
             }
 
             @Override
             public void onFinished() {
                 if (!result.isCompletedExceptionally()) {
-                    result.complete(cmd);
+                    result.complete(new ToolInstance(cmd, true));
                 }
             }
         });
     }
 
-    public String downloadIfRequired(String toolName, URL url) throws IOException {
-        CompletableFuture<String> future = downloadIfRequiredAsyncInner(toolName, url);
+    public ToolInstance downloadIfRequired(String toolName, URL url) throws IOException {
+        CompletableFuture<ToolInstance> future = downloadIfRequiredAsyncInner(toolName, url);
         try {
             return future.get();
         } catch (InterruptedException | ExecutionException e) {
@@ -207,14 +206,14 @@ public class DownloadHelper {
         }
     }
 
-    public CompletableFuture<String> downloadIfRequiredAsync(String toolName, URL url) {
-        CompletableFuture<String> result = new CompletableFuture<>();
+    public CompletableFuture<ToolInstance> downloadIfRequiredAsync(String toolName, URL url) {
         try {
             return downloadIfRequiredAsyncInner(toolName, url);
         } catch (IOException e) {
-            result.completeExceptionally(e);
+            CompletableFuture<ToolInstance> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
         }
-        return result;
     }
 
     private boolean isDownloadAllowed(String tool, String currentVersion, String requiredVersion) {
@@ -317,4 +316,22 @@ public class DownloadHelper {
         }
         destination.toFile().setExecutable(true);
     }
+
+    public static class ToolInstance {
+        private final String command;
+        private final boolean isDownloaded;
+        public ToolInstance(String command, boolean isDownloaded) {
+            this.command = command;
+            this.isDownloaded = isDownloaded;
+        }
+
+        public String getCommand() {
+            return command;
+        }
+
+        public boolean isDownloaded() {
+            return isDownloaded;
+        }
+    }
+
 }

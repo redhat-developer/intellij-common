@@ -24,23 +24,26 @@ public class DownloadHelperTest extends LightPlatformTestCase {
     }
 
     public void testThatGZIsDownloaded() throws IOException {
-        String cmd = DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-test-gz.json"));
-        assertNotNull(cmd);
-        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", cmd);
-        assertEquals(17, new File(cmd).length());
+        DownloadHelper.ToolInstance toolInstance = DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-test-gz.json"));
+        assertNotNull(toolInstance);
+        assertNotNull(toolInstance.getCommand());
+        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
+        assertEquals(17, new File(toolInstance.getCommand()).length());
     }
 
     public void testThatTarGZIsDownloaded() throws IOException {
-        String cmd = DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-test-tar.gz.json"));
-        assertNotNull(cmd);
-        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", cmd);
-        assertEquals(17, new File(cmd).length());
+        DownloadHelper.ToolInstance toolInstance = DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-test-tar.gz.json"));
+        assertNotNull(toolInstance);
+        assertNotNull(toolInstance.getCommand());
+        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
+        assertEquals(17, new File(toolInstance.getCommand()).length());
     }
 
     public void testThatPlainFileDownloaded() throws IOException{
-        String cmd = DownloadHelper.getInstance().downloadIfRequired("kn", DownloadHelperTest.class.getResource("/knative-test.json"));
-        assertNotNull(cmd);
-        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", cmd);
-        assertEquals(17, new File(cmd).length());
+        DownloadHelper.ToolInstance toolInstance = DownloadHelper.getInstance().downloadIfRequired("kn", DownloadHelperTest.class.getResource("/knative-test.json"));
+        assertNotNull(toolInstance);
+        assertNotNull(toolInstance.getCommand());
+        assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
+        assertEquals(17, new File(toolInstance.getCommand()).length());
     }
 }
