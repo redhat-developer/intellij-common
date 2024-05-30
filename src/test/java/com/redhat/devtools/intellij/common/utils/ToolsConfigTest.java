@@ -28,19 +28,19 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigCanLoad() throws IOException {
+  public void verifyThatConfigCanLoad() {
     assertNotNull(config);
   }
 
   @Test
-  public void verifyThatConfigReturnsTools() throws IOException {
+  public void verifyThatConfigReturnsTools() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
   }
 
   @Test
-  public void verifyThatConfigReturnsVersion() throws IOException {
+  public void verifyThatConfigReturnsVersion() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -48,7 +48,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsVersionCmd() throws IOException {
+  public void verifyThatConfigReturnsVersionCmd() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -56,7 +56,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsVersionExtractRegExp() throws IOException {
+  public void verifyThatConfigReturnsVersionExtractRegExp() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -64,7 +64,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsVersionMatchRegExp() throws IOException {
+  public void verifyThatConfigReturnsVersionMatchRegExp() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -72,7 +72,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsBaseDir() throws IOException {
+  public void verifyThatConfigReturnsBaseDir() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -80,7 +80,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsPlatforms() throws IOException {
+  public void verifyThatConfigReturnsPlatforms() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -89,7 +89,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsWindowsPlatform() throws IOException {
+  public void verifyThatConfigReturnsWindowsPlatform() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -99,7 +99,7 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsOSXPlatform() throws IOException {
+  public void verifyThatConfigReturnsOSXPlatform() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
@@ -109,12 +109,23 @@ public class ToolsConfigTest {
   }
 
   @Test
-  public void verifyThatConfigReturnsLinuxPlatform() throws IOException {
+  public void verifyThatConfigReturnsLinuxPlatform() {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
     assertNotNull(tool.getPlatforms());
     assertFalse(tool.getPlatforms().isEmpty());
     assertNotNull(tool.getPlatforms().get("lnx"));
+  }
+
+  @Test
+  public void verifyThatConfigReturnsCorrectChecksums() {
+    assertNotNull(config);
+    ToolsConfig.Tool tool = config.getTools().get("tkn");
+    assertNotNull(tool);
+    assertNotNull(tool.getPlatforms());
+    assertFalse(tool.getPlatforms().isEmpty());
+    assertNotNull(tool.getPlatforms().get("win"));
+    assertEquals("50dfa941ccdbe63c112cb28af521f74f3d972cf06ba0092844a20197ddf31de5", tool.getPlatforms().get("win").getSha256());
   }
 }

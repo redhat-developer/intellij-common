@@ -34,40 +34,20 @@ public class ToolsConfig {
       return platforms;
     }
 
-    public void setPlatforms(Map<String, Platform> platforms) {
-      this.platforms = platforms;
-    }
-
     public String getVersion() {
       return version;
-    }
-
-    public void setVersion(String version) {
-      this.version = version;
     }
 
     public String getVersionCmd() {
       return versionCmd;
     }
 
-    public void setVersionCmd(String versionCmd) {
-      this.versionCmd = versionCmd;
-    }
-
     public String getVersionExtractRegExp() {
       return versionExtractRegExp;
     }
 
-    public void setVersionExtractRegExp(String versionExtractRegExp) {
-      this.versionExtractRegExp = versionExtractRegExp;
-    }
-
     public String getVersionMatchRegExpr() {
       return versionMatchRegExpr;
-    }
-
-    public void setVersionMatchRegExpr(String versionMatchRegExpr) {
-      this.versionMatchRegExpr = versionMatchRegExpr;
     }
 
     public String getBaseDir() {
@@ -81,10 +61,6 @@ public class ToolsConfig {
     public boolean isSilentMode() {
       return silentMode;
     }
-
-    public void setSilentMode(boolean silentMode) {
-      this.silentMode = silentMode;
-    }
   }
 
   @JsonIgnoreProperties(ignoreUnknown = true)
@@ -92,6 +68,7 @@ public class ToolsConfig {
     private URL url;
     private String cmdFileName;
     private String dlFileName;
+    private String sha256;
 
     public URL getUrl() {
       return url;
@@ -105,17 +82,14 @@ public class ToolsConfig {
       return cmdFileName;
     }
 
-    public void setCmdFileName(String cmdFileName) {
-      this.cmdFileName = cmdFileName;
-    }
-
     public String getDlFileName() {
       return dlFileName;
     }
 
-    public void setDlFileName(String dlFileName) {
-      this.dlFileName = dlFileName;
+    public String getSha256() {
+      return sha256;
     }
+
   }
 
   private Map<String, Tool> tools = new HashMap<>();
@@ -124,7 +98,4 @@ public class ToolsConfig {
     return tools;
   }
 
-  public void setTools(Map<String, Tool> tools) {
-    this.tools = tools;
-  }
 }
