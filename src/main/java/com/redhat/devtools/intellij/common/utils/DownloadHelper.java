@@ -144,7 +144,7 @@ public class DownloadHelper {
             Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command);
             final String cmd = path.toString();
             if (!Files.exists(path)) {
-                return downloadInBackground(toolName, platform, path, cmd, tool, version, platform.getSha256());
+                result = downloadInBackground(toolName, platform, path, cmd, tool, version, platform.getSha256());
             } else {
                 result.complete(new ToolInstance(cmd, false));
             }
@@ -325,7 +325,7 @@ public class DownloadHelper {
             byte[] hash = digest.digest(Files.readAllBytes(path));
             return MessageDigest.isEqual(hash, checksum.getBytes(StandardCharsets.UTF_8));
         } catch (NoSuchAlgorithmException e) {
-            throw new IOException(e);
+            throw new IOException("Could not verify checksum for file " + path.toString(), e);
         }
     }
 
