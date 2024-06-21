@@ -12,19 +12,19 @@
           "url": "https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Windows_x86_64.zip",
           "cmdFileName": "tkn.exe",
           "dlFileName": "tkn_0.5.0_Windows_x86_64.zip",
-          "sha256": "50dfa941ccdbe63c112cb28af521f74f3d972cf06ba0092844a20197ddf31de5"
+          "sha256": "74f3d972cf06ba0092844a20197ddf31de5"
         },
         "osx": {
           "url": "https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Darwin_x86_64.tar.gz",
           "cmdFileName": "tkn",
           "dlFileName": "tkn_0.5.0_Darwin_x86_64.tar.gz",
-          "sha256": "6818c072d4df1365c7d2b01ebc29dd034745f78fb6ea1d5a28422a3ed784b42b"
+          "sha256": "0018c072d4df1365c7d2b01ebc29dd034745f78fb6ea1d5a28422a3ed784b42b"
         },
         "lnx": {
           "url": "https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Linux_x86_64.tar.gz",
           "cmdFileName": "tkn",
           "dlFileName": "tkn_0.5.0_Linux_x86_64.tar.gz",
-          "sha256": "24b9f16d28350eab730a04ba66f5adffbda9918b4895ac761f67e3310b0fecd9"
+          "sha256": "00000000000"
         }
       }
     }

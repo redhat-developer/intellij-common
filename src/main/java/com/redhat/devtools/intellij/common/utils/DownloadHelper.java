@@ -36,9 +36,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -96,19 +99,22 @@ public class DownloadHelper {
          *       "silentMode": true, //if the download needs to be started automatically without user input
          *       "platforms": {
          *         "win": {
-         *           "url": "https://tool.com/tool/v1.0.0/odo-windows-amd64.exe.tar.gz",
+         *           "url": "https://tool.com/tool/v1.0.0/tool-windows-amd64.exe.tar.gz",
          *           "cmdFileName": "tool.exe",
          *           "dlFileName": "tool-windows-amd64.exe.gz"
+         *           "sha256": "123456789"
          *         },
          *         "osx": {
-         *           "url": "https://tool.com/tool/v1.0.0/odo-darwin-amd64.tar.gz",
+         *           "url": "https://tool.com/tool/v1.0.0/tool-darwin-amd64.tar.gz",
          *           "cmdFileName": "tool",
          *           "dlFileName": "tool-darwin-amd64.gz"
+         *           "sha256": "123456789"
          *         },
          *         "lnx": {
-         *           "url": "https://tool.com/tool/v1.0.0/odo-linux-amd64.tar.gz",
-         *           "cmdFileName": "odo",
-         *           "dlFileName": "odo-linux-amd64.gz"
+         *           "url": "https://tool.com/tool/v1.0.0/tool-linux-amd64.tar.gz",
+         *           "cmdFileName": "tool",
+         *           "dlFileName": "tool-linux-amd64.gz"
+         *           "sha256": "123456789"
          *         }
          *       }
          *     }
@@ -138,7 +144,7 @@ public class DownloadHelper {
             Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command);
             final String cmd = path.toString();
             if (!Files.exists(path)) {
-                downloadInBackground(toolName, platform, path, cmd, tool, version, result);
+                result = downloadInBackground(toolName, platform, path, cmd, tool, version, platform.getSha256());
             } else {
                 result.complete(new ToolInstance(cmd, false));
             }
@@ -158,21 +164,23 @@ public class DownloadHelper {
 
     }
 
-    private void downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, CompletableFuture<ToolInstance> result) {
+    private CompletableFuture<ToolInstance> downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, String checksum) {
+        CompletableFuture<ToolInstance> result = new CompletableFuture<>();
         if (ApplicationManager.getApplication().isUnitTestMode()) {
-            downloadInBackgroundManager(toolName, platform, path, cmd, result);
+            downloadInBackgroundManager(toolName, platform, path, cmd, checksum, result);
         } else {
             ApplicationManager.getApplication().invokeLater(() -> {
                 if (tool.isSilentMode() || isDownloadAllowed(toolName, version, tool.getVersion())) {
-                    downloadInBackgroundManager(toolName, platform, path, cmd, result);
+                    downloadInBackgroundManager(toolName, platform, path, cmd, checksum, result);
                 } else {
                     result.complete(new ToolInstance(platform.getCmdFileName(), false));
                 }
             });
         }
+        return result;
     }
 
-    private void downloadInBackgroundManager(String toolName, ToolsConfig.Platform platform, Path path, String cmd, CompletableFuture<ToolInstance> result) {
+    private void downloadInBackgroundManager(String toolName, ToolsConfig.Platform platform, Path path, String cmd, String checksum, CompletableFuture<ToolInstance> result) {
         final Path dlFilePath = path.resolveSibling(platform.getDlFileName());
         ProgressManager.getInstance().run(new Task.Backgroundable(null, "Downloading " + toolName, false) {
             @Override
@@ -181,6 +189,9 @@ public class DownloadHelper {
                     HttpRequests.request(platform.getUrl().toString()).useProxy(true).connect(request -> {
                         downloadFile(request.getInputStream(), dlFilePath, progressIndicator, request.getConnection().getContentLength());
                         uncompress(dlFilePath, path);
+                        if (checksum != null && !verify(dlFilePath, checksum)){
+                            throw new IOException("Failed to verify checksum for " + platform.getDlFileName());
+                        }
                         return cmd;
                     });
                 } catch (IOException e) {
@@ -266,15 +277,6 @@ public class DownloadHelper {
         }
     }
 
-    private InputStream checkTar(InputStream stream) throws IOException {
-            TarArchiveInputStream tarStream = new TarArchiveInputStream(stream);
-            if (tarStream.getNextTarEntry() != null) {
-                return tarStream;
-            } else {
-                throw new IOException("No TAR entry found in " + stream);
-            }
-    }
-
     private InputStream mapStream(String filename, InputStream input) {
         String extension;
         while (((extension = FilenameUtils.getExtension(filename)) != null) && MAPPERS.containsKey(extension)) {
@@ -315,6 +317,16 @@ public class DownloadHelper {
             }
         }
         destination.toFile().setExecutable(true);
+    }
+
+    private boolean verify(Path path, String checksum) throws IOException {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(Files.readAllBytes(path));
+            return MessageDigest.isEqual(hash, checksum.getBytes(StandardCharsets.UTF_8));
+        } catch (NoSuchAlgorithmException e) {
+            throw new IOException("Could not verify checksum for file " + path.toString(), e);
+        }
     }
 
     public static class ToolInstance {
