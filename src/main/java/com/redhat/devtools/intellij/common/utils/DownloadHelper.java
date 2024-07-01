@@ -16,9 +16,12 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.HttpRequests;
 import com.redhat.devtools.intellij.common.CommonConstants;
 import com.twelvemonkeys.lang.Platform;
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.ArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -51,6 +54,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class DownloadHelper {
+
+    private static final int BUFFER_SIZE = 4096;
+
     private static final UnaryOperator<InputStream> UNCOMPRESSOR = (input -> {
         try {
             return new CompressorStreamFactory().createCompressorInputStream(input);
@@ -141,7 +147,8 @@ public class DownloadHelper {
         String command = platform.getCmdFileName();
         String version = getVersionFromPath(tool, platform);
         if (!areCompatible(version, tool.getVersionMatchRegExpr())) {
-            Path path = Paths.get(tool.getBaseDir().replace("$HOME", CommonConstants.HOME_FOLDER), "cache", tool.getVersion(), command);
+            String replacement = Strings.isEmpty(CommonConstants.TOOLS_DOWNLOAD_PATH) ? CommonConstants.HOME_FOLDER : CommonConstants.TOOLS_DOWNLOAD_PATH;
+            Path path = Paths.get(tool.getBaseDir().replace("$HOME", replacement), "cache", tool.getVersion(), command);
             final String cmd = path.toString();
             if (!Files.exists(path)) {
                 result = downloadInBackground(toolName, platform, path, cmd, tool, version, platform.getSha256());
@@ -264,7 +271,7 @@ public class DownloadHelper {
     }
 
     private static void downloadFile(InputStream input, Path dlFileName, ProgressIndicator progressIndicator, long size) throws IOException {
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[BUFFER_SIZE];
         Files.createDirectories(dlFileName.getParent());
         try (OutputStream output = Files.newOutputStream(dlFileName)) {
             int lg;
@@ -320,12 +327,17 @@ public class DownloadHelper {
     }
 
     private boolean verify(Path path, String checksum) throws IOException {
-        try {
+        try (InputStream stream = Files.newInputStream(path)) {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(Files.readAllBytes(path));
-            return MessageDigest.isEqual(hash, checksum.getBytes(StandardCharsets.UTF_8));
-        } catch (NoSuchAlgorithmException e) {
-            throw new IOException("Could not verify checksum for file " + path.toString(), e);
+            final byte[] buffer = new byte[BUFFER_SIZE];
+            int read = stream.read(buffer, 0, BUFFER_SIZE);
+            while (read > -1) {
+                digest.update(buffer, 0, read);
+                read = stream.read(buffer, 0, BUFFER_SIZE);
+            }
+            return MessageDigest.isEqual(digest.digest(), Hex.decodeHex(checksum));
+        } catch (NoSuchAlgorithmException | DecoderException e) {
+            throw new IOException("Could not verify checksum for file " + path, e);
         }
     }
 
