@@ -61,7 +61,7 @@ task packageTests(type: Jar) {
 test {
     // Discover and execute JUnit4-based tests
     useJUnit()
-    systemProperties['tools.dl.path'] = project.mkdir "/tmp/junit-for-ij-common"
+    systemProperties['tools.dl.path'] = getTemporaryDir()
     jvmArgs "-Djava.awt.headless=true"
     jacoco {
         includeNoLocationClasses = true
