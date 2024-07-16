@@ -24,6 +24,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - uses: actions/upload-artifact@v1
+      if: always()
       with:
         name: linux-test-reports
         path: build/reports
@@ -42,6 +43,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - uses: actions/upload-artifact@v1
+      if: always()
       with:
         name: macos-test-reports
         path: build/reports
@@ -60,6 +62,7 @@ jobs:
     - name: Build with Gradle
       run: ./gradlew build
     - uses: actions/upload-artifact@v1
+      if: always()
       with:
         name: windows-test-reports
         path: build/reports
