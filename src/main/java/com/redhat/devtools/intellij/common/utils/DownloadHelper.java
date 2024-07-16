@@ -218,7 +218,10 @@ public class DownloadHelper {
         CompletableFuture<ToolInstance> future = downloadIfRequiredAsyncInner(toolName, url);
         try {
             return future.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException(e);
+        } catch (ExecutionException e) {
             throw new IOException(e);
         }
     }

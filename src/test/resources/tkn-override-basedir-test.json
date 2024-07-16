@@ -5,7 +5,7 @@
       "versionCmd": "version",
       "versionExtractRegExp": "Client version: (\\d+[\\.\\d+]*)\\s.*",
       "versionMatchRegExpr": "0\\..*",
-      "baseDir": ".",
+      "baseDir": "$HOME/.tkn-test",
       "silentMode": true,
       "platforms": {
         "win": {
