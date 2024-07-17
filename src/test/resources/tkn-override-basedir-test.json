@@ -10,7 +10,7 @@
       "platforms": {
         "win": {
           "url": "https://github.com/tektoncd/cli/releases/download/v0.5.0/tkn_0.5.0_Windows_x86_64.zip",
-          "cmdFileName": "tkn.exe",
+          "cmdFileName": "tkn",
           "dlFileName": "tkn_0.5.0_Windows_x86_64.zip",
           "sha256": "50dfa941ccdbe63c112cb28af521f74f3d972cf06ba0092844a20197ddf31de5"
         },
