@@ -58,6 +58,17 @@ task packageTests(type: Jar) {
     archiveClassifier = 'test'
 }
 
+test {
+    // Discover and execute JUnit4-based tests
+    useJUnit()
+    systemProperties['tools.dl.path'] = getTemporaryDir()
+    jvmArgs "-Djava.awt.headless=true"
+    jacoco {
+        includeNoLocationClasses = true
+        excludes = ["jdk.internal.*"]
+    }
+}
+
 group 'com.redhat.devtools.intellij'
 version projectVersion // Plugin version
 

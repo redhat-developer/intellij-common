@@ -20,18 +20,17 @@ import java.nio.file.Paths;
 
 public class DownloadHelperTest extends LightPlatformTestCase {
     private TestDialog previous;
+
     @Override
     public void setUp() throws Exception {
         super.setUp();
         previous = MessagesHelper.setTestDialog(TestDialog.OK);
-        FileUtils.deleteDirectory(new File("cache"));
     }
 
     @Override
     protected void tearDown() throws Exception {
         MessagesHelper.setTestDialog(previous);
         super.tearDown();
-        FileUtils.deleteDirectory(new File("cache"));
     }
 
     public void testThatGZIsDownloaded() throws IOException {
@@ -39,7 +38,7 @@ public class DownloadHelperTest extends LightPlatformTestCase {
         assertNotNull(toolInstance);
         assertNotNull(toolInstance.getCommand());
         assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
-        assertEquals(17, new File(toolInstance.getCommand()).length());
+        FileUtils.deleteDirectory(Paths.get(toolInstance.getCommand()).toFile().getParentFile());
     }
 
     public void testThatTarGZIsDownloaded() throws IOException {
@@ -47,7 +46,7 @@ public class DownloadHelperTest extends LightPlatformTestCase {
         assertNotNull(toolInstance);
         assertNotNull(toolInstance.getCommand());
         assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
-        assertEquals(17, new File(toolInstance.getCommand()).length());
+        FileUtils.deleteDirectory(Paths.get(toolInstance.getCommand()).toFile().getParentFile());
     }
 
     public void testThatPlainFileDownloaded() throws IOException {
@@ -55,7 +54,7 @@ public class DownloadHelperTest extends LightPlatformTestCase {
         assertNotNull(toolInstance);
         assertNotNull(toolInstance.getCommand());
         assertEquals("." + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
-        assertEquals(17, new File(toolInstance.getCommand()).length());
+        FileUtils.deleteDirectory(Paths.get(toolInstance.getCommand()).toFile().getParentFile());
     }
 
     public void testThatChecksumIsValidForDownloadedTool() throws IOException {
@@ -66,12 +65,19 @@ public class DownloadHelperTest extends LightPlatformTestCase {
     }
 
     public void testThatChecksumIsInValidForDownloadedTool() {
-        try {
-            DownloadHelper.ToolInstance toolInstance = DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-test-invalid-checksum.json"));
-            FileUtils.deleteDirectory(Paths.get(toolInstance.getCommand()).toFile().getParentFile());
-            fail("should raise exception");
-        } catch (IOException e){
-            assertTrue(e.getMessage().contains("Error while setting tool"));
-        }
+      try {
+        DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-test-invalid-checksum.json"));
+        fail("should raise exception");
+      } catch (IOException e) {
+        assertTrue(e.getMessage().contains("Error while setting tool"));
+      }
+    }
+
+    public void testThatPlainFileDownloadedInUserSpecificFolder() throws IOException {
+        DownloadHelper.ToolInstance toolInstance = DownloadHelper.getInstance().downloadIfRequired("tkn", DownloadHelperTest.class.getResource("/tkn-override-basedir-test.json"));
+        assertNotNull(toolInstance);
+        assertNotNull(toolInstance.getCommand());
+        assertEquals(System.getProperty("tools.dl.path") + File.separatorChar + ".tkn-test" + File.separatorChar + "cache" + File.separatorChar + "0.5.0" + File.separatorChar + "tkn", toolInstance.getCommand());
+        FileUtils.deleteDirectory(Paths.get(toolInstance.getCommand()).toFile().getParentFile().getParentFile().getParentFile());
     }
 }

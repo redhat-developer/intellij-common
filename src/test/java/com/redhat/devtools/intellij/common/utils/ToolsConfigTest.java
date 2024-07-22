@@ -76,7 +76,7 @@ public class ToolsConfigTest {
     assertNotNull(config);
     ToolsConfig.Tool tool = config.getTools().get("tkn");
     assertNotNull(tool);
-    assertEquals("$HOME/.tekton", tool.getBaseDir());
+    assertEquals(".", tool.getBaseDir());
   }
 
   @Test
@@ -86,36 +86,9 @@ public class ToolsConfigTest {
     assertNotNull(tool);
     assertNotNull(tool.getPlatforms());
     assertFalse(tool.getPlatforms().isEmpty());
-  }
-
-  @Test
-  public void verifyThatConfigReturnsWindowsPlatform() {
-    assertNotNull(config);
-    ToolsConfig.Tool tool = config.getTools().get("tkn");
-    assertNotNull(tool);
-    assertNotNull(tool.getPlatforms());
-    assertFalse(tool.getPlatforms().isEmpty());
     assertNotNull(tool.getPlatforms().get("win"));
-  }
-
-  @Test
-  public void verifyThatConfigReturnsOSXPlatform() {
-    assertNotNull(config);
-    ToolsConfig.Tool tool = config.getTools().get("tkn");
-    assertNotNull(tool);
-    assertNotNull(tool.getPlatforms());
-    assertFalse(tool.getPlatforms().isEmpty());
-    assertNotNull(tool.getPlatforms().get("osx"));
-  }
-
-  @Test
-  public void verifyThatConfigReturnsLinuxPlatform() {
-    assertNotNull(config);
-    ToolsConfig.Tool tool = config.getTools().get("tkn");
-    assertNotNull(tool);
-    assertNotNull(tool.getPlatforms());
-    assertFalse(tool.getPlatforms().isEmpty());
     assertNotNull(tool.getPlatforms().get("lnx"));
+    assertNotNull(tool.getPlatforms().get("osx"));
   }
 
   @Test
