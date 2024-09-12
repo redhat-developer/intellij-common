@@ -23,8 +23,7 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
-    - uses: actions/upload-artifact@v1
-      if: always()
+    - uses: actions/upload-artifact@v4
       with:
         name: linux-test-reports
         path: build/reports
@@ -42,8 +41,7 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
-    - uses: actions/upload-artifact@v1
-      if: always()
+    - uses: actions/upload-artifact@v4
       with:
         name: macos-test-reports
         path: build/reports
@@ -61,8 +59,7 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: ./gradlew build
-    - uses: actions/upload-artifact@v1
-      if: always()
+    - uses: actions/upload-artifact@v4
       with:
         name: windows-test-reports
         path: build/reports
