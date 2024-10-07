@@ -11,7 +11,7 @@ plugins {
 
 group = "com.redhat.devtools.intellij"
 version = providers.gradleProperty("projectVersion").get() // Plugin version
-val ideaVersion = providers.gradleProperty("platformVersion").get()
+val platformVersion = providers.gradleProperty("ideaVersion").get()
 
 // Set the JVM language level used to build the project.
 java {
@@ -31,7 +31,7 @@ repositories {
 
 dependencies {
     intellijPlatform {
-        create(IntelliJPlatformType.IntellijIdeaCommunity, ideaVersion)
+        create(IntelliJPlatformType.IntellijIdeaCommunity, platformVersion)
 
         // Bundled Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
@@ -59,8 +59,12 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
     testImplementation(libs.mockito.inline)
-    testImplementation(libs.opentest4j) // https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#missing-opentest4j-dependency-in-test-framework
+    testImplementation(libs.opentest4j) // known issue: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#missing-opentest4j-dependency-in-test-framework
 
+}
+
+intellijPlatform {
+    buildSearchableOptions = false
 }
 
 tasks {
@@ -102,8 +106,8 @@ nexusPublishing {
 
 val testJarFile = file("${layout.buildDirectory}/libs/intellij-common-${version}-test.jar")
 val testArtifact = artifacts.add("archives", testJarFile) {
-    setType("test")
-    setClassifier("test")
+    type = "test"
+    classifier = "test"
     builtBy("packageTests")
 }
 
