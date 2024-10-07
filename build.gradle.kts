@@ -90,6 +90,19 @@ tasks {
         archiveClassifier.set("test")
     }
 
+    withType<GenerateModuleMetadata> {
+        enabled = false
+    }
+
+    // infamous hack, see https://github.com/gradle-nexus/publish-plugin/issues/354
+    assemble {
+        val fakeSearchableOption = projectDir.absolutePath + "/version.txt"
+        doLast {
+            println("************************ GENERATING FAKE JAR FOR PUBLISHING TO NEXUS *************************************************")
+            file("${layout.buildDirectory.get().asFile.absolutePath}/libs/intellij-common-${version}-searchableOptions.jar").writeText("...")
+        }
+    }
+
 }
 
 nexusPublishing {
@@ -104,7 +117,7 @@ nexusPublishing {
     }
 }
 
-val testJarFile = file("${layout.buildDirectory}/libs/intellij-common-${version}-test.jar")
+val testJarFile = file("${layout.buildDirectory.get().asFile.absolutePath}/libs/intellij-common-${version}-test.jar")
 val testArtifact = artifacts.add("archives", testJarFile) {
     type = "test"
     classifier = "test"
