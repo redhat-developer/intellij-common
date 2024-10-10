@@ -1,5 +1,6 @@
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import org.jetbrains.intellij.platform.gradle.models.ProductRelease
 
 plugins {
     id("java") // Java support
@@ -94,9 +95,14 @@ tasks {
         enabled = false
     }
 
+    printProductsReleases {
+        channels = listOf(ProductRelease.Channel.EAP)
+        types = listOf(IntelliJPlatformType.IntellijIdeaCommunity)
+        untilBuild = provider { null }
+    }
+
     // infamous hack, see https://github.com/gradle-nexus/publish-plugin/issues/354
     assemble {
-        val fakeSearchableOption = projectDir.absolutePath + "/version.txt"
         doLast {
             println("************************ GENERATING FAKE JAR FOR PUBLISHING TO NEXUS *************************************************")
             file("${layout.buildDirectory.get().asFile.absolutePath}/libs/intellij-common-${version}-searchableOptions.jar").writeText("...")
