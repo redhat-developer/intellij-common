@@ -65,7 +65,7 @@ dependencies {
 }
 
 intellijPlatform {
-    buildSearchableOptions = false
+    buildSearchableOptions = false // no custom settings, see https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#how-to-disable-building-the-searchable-options
 }
 
 tasks {
