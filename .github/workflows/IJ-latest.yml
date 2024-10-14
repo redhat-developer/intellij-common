@@ -23,6 +23,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
       - name: Build with Gradle
+        shell: bash
         run: |
           LATEST-EAP-SNAPSHOT=$(./gradlew printProductsReleases | grep 'IC-' | head -n 1 | cut -d'-' -f2)
           ./gradlew build --continue -PideaVersion=$LATEST-EAP-SNAPSHOT
