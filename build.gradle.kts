@@ -64,10 +64,6 @@ dependencies {
 
 }
 
-intellijPlatform {
-    buildSearchableOptions = false // no custom settings, see https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#how-to-disable-building-the-searchable-options
-}
-
 tasks {
     wrapper {
         gradleVersion = providers.gradleProperty("gradleVersion").get()
@@ -91,22 +87,10 @@ tasks {
         archiveClassifier.set("test")
     }
 
-    withType<GenerateModuleMetadata> {
-        enabled = false
-    }
-
     printProductsReleases {
         channels = listOf(ProductRelease.Channel.EAP)
         types = listOf(IntelliJPlatformType.IntellijIdeaCommunity)
         untilBuild = provider { null }
-    }
-
-    // infamous hack, see https://github.com/gradle-nexus/publish-plugin/issues/354
-    assemble {
-        doLast {
-            println("************************ GENERATING FAKE JAR FOR PUBLISHING TO NEXUS *************************************************")
-            file("${layout.buildDirectory.get().asFile.absolutePath}/libs/intellij-common-${version}-searchableOptions.jar").writeText("...")
-        }
     }
 
 }
@@ -133,7 +117,9 @@ val testArtifact = artifacts.add("archives", testJarFile) {
 publishing {
     publications {
         create<MavenPublication>("mavenJava") {
-            from(components["java"])
+            from(components["intellijPlatform"])
+            artifact(tasks.named("sourcesJar"))
+            artifact(tasks.named("javadocJar"))
             artifact(testArtifact)
             pom {
                 name.set("IntelliJ Common")
