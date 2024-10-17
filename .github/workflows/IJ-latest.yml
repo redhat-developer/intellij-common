@@ -25,8 +25,8 @@ jobs:
       - name: Build with Gradle
         shell: bash
         run: |
-          LATEST-EAP-SNAPSHOT=$(./gradlew printProductsReleases | grep 'IC-' | head -n 1 | cut -d'-' -f2)
-          ./gradlew build --continue -PideaVersion=$LATEST-EAP-SNAPSHOT
+          LATEST_EAP_SNAPSHOT=$(./gradlew printProductsReleases | grep 'IC-' | head -n 1 | cut -d'-' -f2)
+          ./gradlew build --continue -PideaVersion=$LATEST_EAP_SNAPSHOT
       - uses: actions/upload-artifact@v4
         if: always()
         with:
