@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.intellij.platform.gradle.IntelliJPlatformType
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 import org.jetbrains.intellij.platform.gradle.models.ProductRelease
@@ -59,9 +60,8 @@ dependencies {
     // for unit tests
     testImplementation(libs.junit)
     testImplementation(libs.assertj.core)
-    testImplementation(libs.mockito.inline)
+    testImplementation(libs.mockito.core)
     testImplementation(libs.opentest4j) // known issue: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-faq.html#missing-opentest4j-dependency-in-test-framework
-
 }
 
 tasks {
@@ -73,6 +73,9 @@ tasks {
         useJUnit()
         systemProperty("tools.dl.path", temporaryDir)
         jvmArgs("-Djava.awt.headless=true")
+        testLogging {
+            exceptionFormat = TestExceptionFormat.FULL
+        }
     }
 
     withType<Test> {

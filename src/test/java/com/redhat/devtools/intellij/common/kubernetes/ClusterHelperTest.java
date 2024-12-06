@@ -38,15 +38,19 @@ public class ClusterHelperTest {
 
     @Test
     public void testOCP4NormalUserCluster() {
+        // given
         OpenShiftClient oclient = mock(OpenShiftClient.class);
         when(oclient.getVersion()).thenReturn(null);
-        when(oclient.isSupported()).thenReturn(true);
         VersionInfo versionInfo = mock(VersionInfo.class);
         when(versionInfo.getGitVersion()).thenReturn("1.20.0");
+
         KubernetesClient client = mock(KubernetesClient.class);
         when(client.adapt(OpenShiftClient.class)).thenReturn(oclient);
+        when(client.hasApiGroup(OpenShiftClient.BASE_API_GROUP, false)).thenReturn(true);
         when(client.getKubernetesVersion()).thenReturn(versionInfo);
+        // when
         ClusterInfo info = ClusterHelper.getClusterInfo(client);
+        // then
         assertEquals("1.20.0", info.getKubernetesVersion());
         assertTrue(info.isOpenshift());
         assertEquals("", info.getOpenshiftVersion());
@@ -54,18 +58,22 @@ public class ClusterHelperTest {
 
     @Test
     public void testOCP3OrOCP4AdminUserCluster() {
+        // given
+        OpenShiftClient oclient = mock(OpenShiftClient.class);
         VersionInfo oversionInfo = mock(VersionInfo.class);
         when(oversionInfo.getMajor()).thenReturn("4");
         when(oversionInfo.getMinor()).thenReturn("7.0");
-        OpenShiftClient oclient = mock(OpenShiftClient.class);
         when(oclient.getVersion()).thenReturn(oversionInfo);
-        when(oclient.isSupported()).thenReturn(true);
-        VersionInfo versionInfo = mock(VersionInfo.class);
-        when(versionInfo.getGitVersion()).thenReturn("1.20.0");
+
         KubernetesClient client = mock(KubernetesClient.class);
         when(client.adapt(OpenShiftClient.class)).thenReturn(oclient);
+        when(client.hasApiGroup(OpenShiftClient.BASE_API_GROUP, false)).thenReturn(true);
+        VersionInfo versionInfo = mock(VersionInfo.class);
+        when(versionInfo.getGitVersion()).thenReturn("1.20.0");
         when(client.getKubernetesVersion()).thenReturn(versionInfo);
+        // when
         ClusterInfo info = ClusterHelper.getClusterInfo(client);
+        // then
         assertEquals("1.20.0", info.getKubernetesVersion());
         assertTrue(info.isOpenshift());
         assertEquals("4.7.0", info.getOpenshiftVersion());

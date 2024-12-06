@@ -134,7 +134,7 @@ public class DownloadHelper {
          */
     private CompletableFuture<ToolInstance> downloadIfRequiredAsyncInner(String toolName, URL url) throws IOException {
         CompletableFuture<ToolInstance> result = new CompletableFuture<>();
-        ToolsConfig config = ConfigHelper.loadToolsConfig(url);
+        ToolsConfig config = ToolsConfigHelper.loadToolsConfig(url);
         ToolsConfig.Tool tool = config.getTools().get(toolName);
         if (tool == null) {
             throw new IOException("Tool " + toolName + " not found in config file " + url);
