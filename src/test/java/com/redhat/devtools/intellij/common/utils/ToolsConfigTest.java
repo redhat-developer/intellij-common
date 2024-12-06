@@ -24,7 +24,7 @@ public class ToolsConfigTest {
 
   @BeforeClass
   public static void init() throws IOException {
-    config = ConfigHelper.loadToolsConfig(ToolsConfig.class.getResource("/tkn-test.json"));
+    config = ToolsConfigHelper.loadToolsConfig(ToolsConfig.class.getResource("/tkn-test.json"));
   }
 
   @Test

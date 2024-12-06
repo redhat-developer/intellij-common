@@ -1,13 +1,13 @@
 [versions]
 # libraries
 junit = "4.13.2"
-kubernetes-client = "6.12.0"
+kubernetes-client = "7.0.0"
 jackson-core = "2.17.0"
 commons-lang3 = "3.12.0"
 commons-exec = "1.3"
 common-lang = "3.9.4"
 assertj-core = "3.22.0"
-mockito-inline = "4.5.1"
+mockito-core = "5.14.2"
 opentest4j = "1.3.0"
 
 # plugins
@@ -22,7 +22,7 @@ kubernetes-httpclient-okhttp = { group = "io.fabric8", name = "kubernetes-httpcl
 jackson-core = { group = "com.fasterxml.jackson.core", name = "jackson-core", version.ref = "jackson-core" }
 commons-lang3 = { group = "org.apache.commons", name = "commons-lang3", version.ref = "commons-lang3" }
 assertj-core = { group = "org.assertj", name = "assertj-core", version.ref = "assertj-core" }
-mockito-inline = { group = "org.mockito", name = "mockito-inline", version.ref = "mockito-inline" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito-core" }
 commons-exec = { group = "org.apache.commons", name = "commons-exec", version.ref = "commons-exec" }
 common-lang = { group = "com.twelvemonkeys.common", name = "common-lang", version.ref = "common-lang" }
 opentest4j = { group = "org.opentest4j", name = "opentest4j", version.ref = "opentest4j" }

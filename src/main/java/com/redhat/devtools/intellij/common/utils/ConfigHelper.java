@@ -10,195 +10,99 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import io.fabric8.kubernetes.api.model.AuthInfo;
-import io.fabric8.kubernetes.api.model.AuthProviderConfig;
-import io.fabric8.kubernetes.api.model.Config;
-import io.fabric8.kubernetes.api.model.ConfigBuilder;
 import io.fabric8.kubernetes.api.model.Context;
 import io.fabric8.kubernetes.api.model.NamedContext;
-import io.fabric8.kubernetes.client.internal.KubeConfigUtils;
+import io.fabric8.kubernetes.client.Config;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Objects;
 
 public class ConfigHelper {
-    private static final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-
-    public static String getKubeConfigPath() {
-        return io.fabric8.kubernetes.client.Config.getKubeconfigFilename();
-    }
-
-    public static void saveKubeConfig(Config config) throws IOException {
-        mapper.writeValue(new File(getKubeConfigPath()), config);
-    }
-
-    public static Config safeLoadKubeConfig() {
-        try {
-            return loadKubeConfig();
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    public static Config loadKubeConfig() throws IOException {
-        return loadKubeConfig(getKubeConfigPath());
-    }
-
-    public static Config loadKubeConfig(String path) throws IOException {
-        File f = new File(path);
-        if (f.exists()) {
-            return KubeConfigUtils.parseConfig(f);
-        } else {
-            return new ConfigBuilder().build();
-        }
-    }
-
-    public static boolean isKubeConfigParsable() {
-        return isKubeConfigParsable(new File(getKubeConfigPath()));
-    }
-
-    public static boolean isKubeConfigParsable(File kubeConfig) {
-        try {
-            mapper.readValue(kubeConfig, Config.class);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    public static ToolsConfig loadToolsConfig() throws IOException {
-        return loadToolsConfig(ConfigHelper.class.getResource("/tools.json"));
-    }
-
-    public static ToolsConfig loadToolsConfig(URL url) throws IOException {
-        try {
-            return mapper.readValue(url, ToolsConfig.class);
-        } catch (IOException e) {
-            throw new IOException("Could not load tools config at " + url.toString() + ": " + e.getMessage(), e);
-        }
-    }
-
-    public static NamedContext getCurrentContext() {
-        try {
-            Config config = loadKubeConfig();
-            return getCurrentContext(config);
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    public static NamedContext getCurrentContext(Config config) {
-        if (config == null) {
-            return null;
-        }
-        return KubeConfigUtils.getCurrentContext(config);
-    }
-
-    public static String getCurrentContextName(Config config) {
-        String current = null;
-        NamedContext currentContext = getCurrentContext(config);
-        if (currentContext != null
-                && currentContext.getName() != null) {
-            current = currentContext.getName();
-        }
-        return current;
-    }
-
-    public static String getCurrentContextName() {
-        try {
-            return getCurrentContextName(loadKubeConfig());
-        } catch (IOException e) {
-            return null;
-        }
-    }
 
     /**
-     * Returns {@code true} if the given {@link io.fabric8.kubernetes.api.model.Config} and
-     * the new {@link io.fabric8.kubernetes.api.model.Config} are equal. They are considered equal if they're
-     * equal in
+     * Returns {@code true} if the given {@link io.fabric8.kubernetes.client.Config}s are equal.
+     * They are considered equal if they're equal in
      * <ul>
-     *     <li>current context (cluster, user, current namespace, extensions)</li>
-     *     <li>(authentication) token</li>
+     *     <li>current context (cluster, user, current namespace)</li>
+     *     <li>auth info</li>
      * </ul>
      *
-     * @param kubeConfig the (file) config to compare
-     * @param newKubeConfig the (client, runtime) config to compare
+     * @param thisConfig the first config to compare
+     * @param thatConfig the second config to compare
      * @return true if both configs are equal in context, contexts and token
-     */
-    public static boolean areEqualCurrentContext(Config kubeConfig, Config newKubeConfig) {
-        if (newKubeConfig == null) {
-            return kubeConfig == null;
-        } else if (kubeConfig == null) {
-            return false;
-        }
-        return areEqual(KubeConfigUtils.getCurrentContext(newKubeConfig), KubeConfigUtils.getCurrentContext(kubeConfig))
-                && areEqualToken(kubeConfig, newKubeConfig);
-    }
-
-    /**
-     * Returns {@code true} if the given {@link io.fabric8.kubernetes.api.model.Config} and
-     * (client runtime) {@link io.fabric8.kubernetes.client.Config} are equal. They are considered equal if they're
-     * equal in
-     * <ul>
-     *     <li>current context (cluster, user, current namespace, extensions)</li>
-     *     <li>(existing) contexts</li>
-     *     <li>(authentication) token</li>
-     * </ul>
      *
-     * @param kubeConfig the (file) config to compare
-     * @param clientConfig the (client, runtime) config to compare
-     * @return true if both configs are equal in context, contexts and token
-     */
-    public static boolean areEqual(Config kubeConfig, io.fabric8.kubernetes.client.Config clientConfig) {
-        if (clientConfig == null) {
-            return kubeConfig == null;
-        } else if (kubeConfig == null) {
-            return false;
-        }
-        return areEqual(clientConfig.getCurrentContext(), KubeConfigUtils.getCurrentContext(kubeConfig))
-                && areEqual(clientConfig.getContexts(), kubeConfig.getContexts())
-        			&& areEqualToken(kubeConfig, clientConfig);
-    }
-
-    /**
-     * Returns {@code true} if the given {@link io.fabric8.kubernetes.api.model.Config} and
-     * (client runtime) {@link io.fabric8.kubernetes.client.Config} are equal. They are considered equal if they're
-     * equal in
-     * <ul>
-     *     <li>current context (cluster, user, current namespace, extensions)</li>
-     *     <li>(existing) contexts</li>
-     *     <li>(authentication) token</li>
-     * </ul>
-     *
-     * @param thisConfig the first (file) config to compare
-     * @param thatConfig the second (file) config to compare
-     * @return true if both configs are equal in context, contexts and token
+     * @see #areEqualCurrentContext(Config, Config)
+     * @see #areEqualCluster(Config, Config)
+     * @see #areEqualAuthInfo(Config, Config)
      */
     public static boolean areEqual(Config thisConfig, Config thatConfig) {
+        return areEqualCurrentContext(thisConfig, thatConfig)
+                && areEqualCluster(thisConfig, thatConfig)
+                && areEqualAuthInfo(thisConfig, thatConfig);
+    }
+
+    /**
+     * Returns {@code true} if the given {@link io.fabric8.kubernetes.client.Config}s are equal in current context.
+     * They are considered equal if they're equal in
+     * <ul>
+     *     <li>name</li>
+     *     <li>cluster</li>
+     *     <li>user</li>
+     *     <li>current namespace</li>
+     * </ul>
+     *
+     * @param thisConfig the first config to compare
+     * @param thatConfig the second config to compare
+     * @return true if both configs are equal in context, existing contexts and token
+     *
+     * @see Config#getCurrentContext()
+     * @see #areEqualContext(NamedContext, NamedContext)
+     */
+    public static boolean areEqualCurrentContext(Config thisConfig, Config thatConfig) {
         if (thisConfig == null) {
             return thatConfig == null;
         } else if (thatConfig == null) {
             return false;
         }
-        return areEqual(KubeConfigUtils.getCurrentContext(thisConfig), KubeConfigUtils.getCurrentContext(thatConfig))
-                && areEqual(thisConfig.getContexts(), thatConfig.getContexts())
-                && areEqualToken(getAuthInfo(thisConfig), getAuthInfo(thatConfig));
+
+        return areEqualContext(thisConfig.getCurrentContext(), thatConfig.getCurrentContext());
     }
 
     /**
-     * Returns {@code true} if both given contexts are equal. They are considered equal if they're equal in
+     * Returns {@code true} if both given {@link NamedContext} are equal in
+     * <ul>
+     *     <li>name</li>
+     *     <li>cluster</li>
+     *     <li>user</li>
+     *     <li>current namespace</li>
+     * </ul>
+     *
+     * @param thisContext the first context to compare
+     * @param thatContext the second context to compare
+     * @return true if both contexts are equal
+     *
+     * @see #areEqualContext(Context, Context) 
+     * @see NamedContext
+     * @see Context
+     */
+    public static boolean areEqualContext(NamedContext thisContext, NamedContext thatContext) {
+        if (thisContext == null) {
+            return thatContext == null;
+        } else if (thatContext == null) {
+            return false;
+        }
+
+        return Objects.equals(thisContext.getName(), thatContext.getName())
+                && areEqualContext(thisContext.getContext(), thatContext.getContext());
+    }
+
+    /**
+     * Returns {@code true} if both given {@link Context} are equal.
+     * They are considered equal if they're equal in
      * <ul>
      *     <li>cluster</li>
      *     <li>user</li>
      *     <li>current namespace</li>
-     *     <li>extensions</li>
      * </ul>
      *
      * @param thisContext the first context to compare
@@ -208,36 +112,182 @@ public class ConfigHelper {
      * @see NamedContext
      * @see Context
      */
-    public static boolean areEqual(NamedContext thisContext, NamedContext thatContext) {
-        if (thisContext == null) {
-            return thatContext == null;
-        } else if (thatContext == null) {
-            return false;
-        }
-        if (!Objects.equals(thisContext.getName(), thatContext.getName())) {
-            return false;
-        }
-
-        return areEqual(thisContext.getContext(), thatContext.getContext());
-    }
-
-    private static boolean areEqual(Context thisContext, Context thatContext) {
+    private static boolean areEqualContext(Context thisContext, Context thatContext) {
         if (thisContext == null) {
             return thatContext == null;
         } else if (thatContext == null) {
             return false;
         }
 
-        if (!Objects.equals(thisContext.getCluster(), thatContext.getCluster())){
-            return false;
-        } else if (!Objects.equals(thisContext.getNamespace(), thatContext.getNamespace())){
-            return false;
-        } else {
-            return Objects.equals(thisContext.getUser(), thatContext.getUser());
-        }
+        return Objects.equals(thisContext.getCluster(), thatContext.getCluster())
+                && Objects.equals(thisContext.getUser(), thatContext.getUser())
+                && Objects.equals(thisContext.getNamespace(), thatContext.getNamespace());
     }
 
-    public static boolean areEqual(Collection<NamedContext> these, Collection<NamedContext> those) {
+    /**
+     * Returns {@code true} if both given {@link Config} are equal in
+     * <ul>
+     *     <li>master url</li>
+     *     <li>(blindly) trust certificates</li>
+     *     <li>proxies</li>
+     *     <li>auth info</li>
+     * </ul>
+     *
+     * @param thisConfig the first config to compare
+     * @param thatConfig the second config to compare
+     * @return true if both configs are equal in master url, trust certs, proxies and auth info
+     *
+     * @see Config
+     */
+    public static boolean areEqualCluster(Config thisConfig, Config thatConfig) {
+        if (thisConfig == null) {
+            return thatConfig == null;
+        } else if (thatConfig == null) {
+            return false;
+        }
+
+        return Objects.equals(thisConfig.getMasterUrl(), thatConfig.getMasterUrl())
+                && areEqualTrustCerts(thisConfig, thatConfig)
+                && areEqualProxy(thisConfig, thatConfig)
+                && areEqualAuthInfo(thisConfig, thatConfig);
+    }
+
+    /**
+     * Returns {@code true} if both given {@link Config} are equal in
+     * <ul>
+     *     <li>http proxy</li>
+     *     <li>https proxy</li>
+     *     <li>proxy username</li>
+     *     <li>proxy password</li>
+     * </ul>
+     *
+     * @param thisConfig the first config to compare
+     * @param thatConfig the second config to compare
+     * @return true if both configs are equal in http- & https-proxy, proxy username & password
+     *
+     * @see Config
+     */
+    private static boolean areEqualProxy(Config thisConfig, Config thatConfig) {
+        if (thisConfig == null) {
+            return thatConfig == null;
+        } else if (thatConfig == null) {
+            return false;
+        }
+
+        return Objects.equals(thisConfig.getHttpProxy(), thatConfig.getHttpProxy())
+                && Objects.equals(thisConfig.getHttpsProxy(), thatConfig.getHttpsProxy())
+                && Objects.equals(thisConfig.getProxyUsername(), thatConfig.getProxyUsername())
+                && Objects.equals(thisConfig.getProxyPassword(), thatConfig.getProxyPassword());
+    }
+
+    /**
+     * Returns {@code true} if both given {@link Config} are equal in
+     * <ul>
+     *     <li>(blindly) trusting certificates</li>
+     *     <li>disable hostname verification</li>
+     *     <li>ca cert data</li>
+     *     <li>ca cert file</li>
+     * </ul>
+     *
+     * @param thisConfig the first config to compare
+     * @param thatConfig the second config to compare
+     * @return true if both configs are equal in trusting certs, disabling hostname verification, ca cert data & file
+     *
+     * @see Config
+     */
+    private static boolean areEqualTrustCerts(Config thisConfig, Config thatConfig) {
+        if (thisConfig == null) {
+            return thatConfig == null;
+        } else if (thatConfig == null) {
+            return false;
+        }
+
+        return thisConfig.isTrustCerts() == thatConfig.isTrustCerts()
+                && thisConfig.isDisableHostnameVerification() == thatConfig.isDisableHostnameVerification()
+                && Objects.equals(thisConfig.getCaCertData(), thatConfig.getCaCertData())
+                && Objects.equals(thisConfig.getCaCertFile(), thatConfig.getCaCertFile());
+    }
+
+    /**
+     * Returns {@code true} if both given {@link Config} are equal in auth info
+     * <ul>
+     *     <li>client cert file</li>
+     *     <li>client cert data</li>
+     *     <li>client key file</li>
+     *     <li>client key data</li>
+     *     <li>client key algo</li>
+     *     <li>username</li>
+     *     <li>password</li>
+     *     <li>proxies</li>
+     *     <li>token</li>
+     * </ul>
+     *
+     * @param thisConfig the first config to compare
+     * @param thatConfig the second config to compare
+     * @return true if both configs are equal in client cert file/data, key file/data/algo, username, password
+     * proxies and token
+     *
+     * @see Config
+     */
+    public static boolean areEqualAuthInfo(Config thisConfig, Config thatConfig) {
+        if (thisConfig == null) {
+            return thatConfig == null;
+        } else if (thatConfig == null) {
+            return false;
+        }
+
+        return Objects.equals(thisConfig.getClientCertFile(), thatConfig.getClientCertFile())
+                && Objects.equals(thisConfig.getClientCertData(), thatConfig.getClientCertData())
+                && Objects.equals(thisConfig.getClientKeyFile(), thatConfig.getClientKeyFile())
+                && Objects.equals(thisConfig.getClientKeyData(), thatConfig.getClientKeyData())
+                && Objects.equals(thisConfig.getClientKeyAlgo(), thatConfig.getClientKeyAlgo())
+                && Objects.equals(thisConfig.getUsername(), thatConfig.getUsername())
+                && Objects.equals(thisConfig.getPassword(), thatConfig.getPassword())
+                && areEqualProxy(thisConfig, thatConfig)
+                && areEqualToken(thisConfig, thatConfig);
+    }
+
+    /**
+     * Returns {@code true} if both given {@link Config} are equal in contexts.
+     * They are considered equal if they're equal in the number of contexts are these are equal individually.
+     * <ul>
+     *     <li>cluster</li>
+     *     <li>user</li>
+     *     <li>current namespace</li>
+     *     <li>extensions</li>
+     * </ul>
+     *
+     * @param thisConfig the first context to compare
+     * @param thatConfig the second context to compare
+     * @return true if both contexts are equal
+     *
+     * @see NamedContext
+     * @see Context
+     *
+     * @see Config#getContexts()
+     */
+    public static boolean areEqualContexts(Config thisConfig, Config thatConfig) {
+        return areEqualContexts(thisConfig.getContexts(), thatConfig.getContexts());
+    }
+
+    /**
+     * Returns {@code true} if both given {@link Config} are equal in contexts.
+     * They are considered equal if they're equal in the number of contexts are these are equal individually.
+     * <ul>
+     *     <li>cluster</li>
+     *     <li>user</li>
+     *     <li>current namespace</li>
+     *     <li>extensions</li>
+     * </ul>
+     *
+     * @param these the contexts to compare
+     * @param those the other contexts to compare to
+     * @return true if both collections of contexts are equal
+     *
+     * @see NamedContext
+     * @see Context
+     */
+    private static boolean areEqualContexts(Collection<NamedContext> these, Collection<NamedContext> those) {
         if (these == null) {
             return those == null;
         } else if (those == null) {
@@ -245,7 +295,7 @@ public class ConfigHelper {
         }
         return these.size() == those.size()
                 && these.stream()
-                        .allMatch(namedContext -> contains(namedContext, those));
+                .allMatch(namedContext -> contains(namedContext, those));
     }
 
     private static boolean contains(NamedContext namedContext, Collection<NamedContext> namedContexts) {
@@ -254,122 +304,25 @@ public class ConfigHelper {
             return false;
         }
         return namedContexts.stream()
-                .anyMatch(named -> areEqual(namedContext, named));
+                .anyMatch(named -> areEqualContext(namedContext, named));
     }
 
     /**
-     * Returns {@code true} if the token in the given (kubernetes file) {@link io.fabric8.kubernetes.api.model.Config}
-     * and (client runtime) {@link io.fabric8.kubernetes.client.Config} are equal.
+     * Returns {@code true} if the (authentication) token in the given {@link io.fabric8.kubernetes.client.Config}
+     * and the one in the other config are equal.
      * Returns {@code false} otherwise.
      *
-     * @param kubeConfig the (kube config) auth info that contains the token
-     * @param clientConfig the (client) config that contains the token
+     * @param thisConfig the config to compare the active token of
+     * @param thatConfig the other config to compare the active token of
      * @return true if both tokens are equal, false otherwise
      */
-    public static boolean areEqualToken(Config kubeConfig, io.fabric8.kubernetes.client.Config clientConfig) {
-        return areEqualToken(getAuthInfo(kubeConfig), clientConfig);
-    }
-
-    /**
-     * Returns {@code true} if the token in the given (kubernetes file) {@link io.fabric8.kubernetes.api.model.Config}
-     * and the one in the new Kubernetes file {@link io.fabric8.kubernetes.api.model.Config} are equal.
-     * Returns {@code false} otherwise.
-     *
-     * @param kubeConfig the (kube config) auth info that contains the token
-     * @param newKubeConfig the (client) config that contains the token
-     * @return true if both tokens are equal, false otherwise
-     */
-    public static boolean areEqualToken(Config kubeConfig, Config newKubeConfig) {
-        return areEqualToken(getAuthInfo(kubeConfig), getAuthInfo(newKubeConfig));
-    }
-
-    private static AuthInfo getAuthInfo(Config kubeConfig) {
-        NamedContext current = KubeConfigUtils.getCurrentContext(kubeConfig);
-        if (current == null) {
-            return null;
-        }
-        return KubeConfigUtils.getUserAuthInfo(kubeConfig, current.getContext());
-    }
-
-    /**
-     * Returns {@code true} if the token in the given {@link AuthInfo} (that's retrieved from the kube config file)
-     * and {@link Config} (that's contains the runtime settings that the kubernetes-client is using) are equal.
-     * Returns {@code false} otherwise.
-     *
-     * @param authInfo the (kube config) auth info that contains the token
-     * @param clientConfig the (client) config that contains the token
-     * @return true if both tokens are equal, false otherwise
-     */
-    public static boolean areEqualToken(AuthInfo authInfo, io.fabric8.kubernetes.client.Config clientConfig) {
-        String kubeConfigToken = getToken(authInfo);
-        if (clientConfig == null
-            || clientConfig.getOauthToken() == null) {
-            return kubeConfigToken == null;
-        }
-        return clientConfig.getOauthToken().equals(kubeConfigToken);
-    }
-
-    /**
-     * Returns {@code true} if the token in the given {@link AuthInfo} (that's retrieved from the kube config file)
-     * and the new {@link AuthInfo} (that's retrieved from the new kube config file) are equal.
-     * Returns {@code false} otherwise.
-     *
-     * @param authInfo the (kube config) auth info that contains the token
-     * @param newAuthInfo the new (kube config) auth that contains the token
-     * @return true if both tokens are equal, false otherwise
-     */
-    public static boolean areEqualToken(AuthInfo authInfo, AuthInfo newAuthInfo) {
-        String configToken = getToken(authInfo);
-        String newConfigToken = getToken(newAuthInfo);
-        if (configToken == null) {
-            return newConfigToken == null;
-        } else if (newConfigToken == null) {
+    public static boolean areEqualToken(Config thisConfig, Config thatConfig) {
+        if (thisConfig == null) {
+            return thatConfig == null;
+        } else if (thatConfig == null) {
             return false;
         }
 
-        return configToken.equals(newConfigToken);
+        return Objects.equals(thisConfig.getAutoOAuthToken(), thatConfig.getAutoOAuthToken());
     }
-
-    /**
-     * Returns the token for the given {@code AuthInfo}. Returns {@code null} if it was not found.
-     * The token is searched in the auth provider in the following
-     * properties, respecting the given order of precedence:
-     * <ul>
-     *     <li>"access-token"</li>
-     *     <li>"id-token"</li>
-     * </ul>
-     * @param authInfo the auth info to retrieve the token from
-     * @return the token that was found or null
-     */
-    private static String getToken(AuthInfo authInfo){
-        if (authInfo == null) {
-            return null;
-        }
-        if (authInfo.getToken() != null) {
-            return authInfo.getToken();
-        }
-        AuthProviderConfig authProviderConfig = authInfo.getAuthProvider();
-        if (authProviderConfig == null) {
-            return null;
-        }
-        Map<String, String> config = authProviderConfig.getConfig();
-        if (config == null
-            || config.isEmpty()) {
-            return null;
-        }
-        // GKE token
-        String accessToken = config.get("access-token");
-        if (accessToken != null
-            && !accessToken.isEmpty()) {
-            return accessToken;
-        }
-        // OpenID Connect token
-        String idToken = config.get("id-token");
-        if (idToken != null
-            && !idToken.isEmpty()) {
-            return idToken;
-        }
-        return null;
-    }
-
 }

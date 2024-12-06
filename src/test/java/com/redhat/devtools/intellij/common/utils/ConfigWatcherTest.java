@@ -10,7 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.utils;
 
-import io.fabric8.kubernetes.api.model.Config;
+import io.fabric8.kubernetes.client.Config;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -157,7 +157,7 @@ public class ConfigWatcherTest {
         private boolean called = false;
 
         @Override
-        public void onUpdate(ConfigWatcher source, Config config) {
+        public void onUpdate(Config updatedConfig) {
             this.called = true;
         }
 

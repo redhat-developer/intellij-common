@@ -11,8 +11,7 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
-import io.fabric8.kubernetes.api.model.Config;
-import io.fabric8.kubernetes.client.internal.KubeConfigUtils;
+import io.fabric8.kubernetes.client.Config;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -38,22 +37,14 @@ public class ConfigWatcher implements Runnable {
     private WatchService service;
 
     public interface Listener {
-        void onUpdate(ConfigWatcher source, Config config);
+        void onUpdate(Config updatedConfig);
     }
 
-    public ConfigWatcher(String config, Listener listener) {
-        this(Paths.get(config), listener);
+    public ConfigWatcher(Listener listener) {
+        this(Config.getKubeconfigFilenames().stream().map(Paths::get).toList(), listener, new HighSensitivityRegistrar());
     }
 
-    public ConfigWatcher(Path config, Listener listener) {
-        this(List.of(config), listener);
-    }
-
-    public ConfigWatcher(List<Path> configs, Listener listener) {
-        this(configs, listener, new HighSensitivityRegistrar());
-    }
-
-    public ConfigWatcher(List<Path> configs, Listener listener, HighSensitivityRegistrar registrar) {
+    protected ConfigWatcher(List<Path> configs, Listener listener, HighSensitivityRegistrar registrar) {
         this.configs = configs;
         this.listener = listener;
         this.registrar = registrar;
@@ -61,7 +52,7 @@ public class ConfigWatcher implements Runnable {
 
     @Override
     public void run() {
-        watch((Config config) -> listener.onUpdate(this, config));
+        watch(listener::onUpdate);
     }
 
     public void close() throws IOException {
@@ -70,11 +61,11 @@ public class ConfigWatcher implements Runnable {
         }
     }
 
-    private void watch(Consumer<Config> consumer) {
+    private void watch(Consumer<Config> listener) {
         try (WatchService service = createWatchService()) {
             Collection<Path> watchedDirectories = getWatchedDirectories();
             watchedDirectories.forEach(directory ->
-                new ConfigDirectoryWatch(directory, consumer, service, registrar).start()
+                new ConfigDirectoryWatch(directory, listener, service, registrar).start()
             );
         } catch (IOException e) {
             String configPaths = configs.stream()
@@ -106,11 +97,11 @@ public class ConfigWatcher implements Runnable {
         private final Path directory;
         private final WatchService service;
         private final HighSensitivityRegistrar registrar;
-        private final Consumer<Config> consumer;
+        private final Consumer<io.fabric8.kubernetes.client.Config> listener;
 
-        private ConfigDirectoryWatch(Path directory, Consumer<Config> consumer, WatchService service, HighSensitivityRegistrar registrar) {
+        private ConfigDirectoryWatch(Path directory, Consumer<io.fabric8.kubernetes.client.Config> listener, WatchService service, HighSensitivityRegistrar registrar) {
             this.directory = directory;
-            this.consumer = consumer;
+            this.listener = listener;
             this.service = service;
             this.registrar = registrar;
         }
@@ -118,7 +109,7 @@ public class ConfigWatcher implements Runnable {
         private void start() {
             try {
                 register(directory, service, registrar);
-                watch(consumer, service);
+                watch(listener, service);
             } catch (InterruptedException e) {
                 LOG.warn("Watching " + directory + " was interrupted", e);
             } catch (IOException e) {
@@ -136,15 +127,24 @@ public class ConfigWatcher implements Runnable {
                 service);
         }
 
-        private void watch(Consumer<Config> consumer, WatchService service) throws InterruptedException {
+        private void watch(Consumer<io.fabric8.kubernetes.client.Config> listener, WatchService service) throws InterruptedException {
             for (WatchKey key = service.take(); key != null; key = service.take()) {
                 key.pollEvents().forEach((event) -> {
                     Path changed = getAbsolutePath(directory, (Path) event.context());
-                    if (isConfigPath(changed)) {
-                        consumer.accept(loadConfig(changed));
-                    }
+                    notifyListener(listener, changed);
                 });
                 key.reset();
+            }
+        }
+
+        private void notifyListener(Consumer<Config> listener, Path changed) {
+            if (isConfigPath(changed)) {
+                try {
+                    var config = Config.autoConfigure(null);
+                    listener.accept(config);
+                } catch (Exception e) {
+                    LOG.warn("Loading config at '" + changed +  "' failed.", e);
+                }
             }
         }
 
@@ -153,39 +153,8 @@ public class ConfigWatcher implements Runnable {
                     && configs.contains(path);
         }
 
-        /**
-         * Returns {@link Config} for the given path if the kube config file
-         * <ul>
-         *     <li>exists and</li>
-         *     <li>is not empty and</li>
-         *     <li>is valid yaml</li>
-         * </ul>
-         * Returns {@code null} otherwise.
-         *
-         * @param path the path to the kube config
-         * @return returns true if the kube config that the event points to exists, is not empty and is valid yaml
-         */
-        private Config loadConfig(Path path) {
-            // TODO: replace by Config#getKubeConfigFiles once kubernetes-client 7.0 is available
-            if (path == null) {
-                return null;
-            }
-            try {
-                if (Files.exists(path)
-                        && Files.size(path) > 0) {
-                    return KubeConfigUtils.parseConfig(path.toFile());
-                }
-            } catch (Exception e) {
-                // only catch
-                LOG.warn("Could not load kube config at " + path.toAbsolutePath(), e);
-            }
-            return null;
-        }
-
         private Path getAbsolutePath(Path directory, Path relativePath) {
             return directory.resolve(relativePath);
         }
-
     }
-
 }
