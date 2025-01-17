@@ -12,6 +12,7 @@ package com.redhat.devtools.intellij.common.utils;
 
 import com.intellij.openapi.diagnostic.Logger;
 import io.fabric8.kubernetes.client.Config;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
@@ -24,7 +25,7 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 public class ConfigWatcher implements Runnable {
@@ -37,7 +38,7 @@ public class ConfigWatcher implements Runnable {
     private WatchService service;
 
     public interface Listener {
-        void onUpdate(Config updatedConfig);
+        void onUpdate(Config updatedConfig, Exception error);
     }
 
     public ConfigWatcher(Listener listener) {
@@ -61,7 +62,7 @@ public class ConfigWatcher implements Runnable {
         }
     }
 
-    private void watch(Consumer<Config> listener) {
+    private void watch(BiConsumer<Config, Exception> listener) {
         try (WatchService service = createWatchService()) {
             Collection<Path> watchedDirectories = getWatchedDirectories();
             watchedDirectories.forEach(directory ->
@@ -97,9 +98,9 @@ public class ConfigWatcher implements Runnable {
         private final Path directory;
         private final WatchService service;
         private final HighSensitivityRegistrar registrar;
-        private final Consumer<io.fabric8.kubernetes.client.Config> listener;
+        private final BiConsumer<Config, Exception> listener;
 
-        private ConfigDirectoryWatch(Path directory, Consumer<io.fabric8.kubernetes.client.Config> listener, WatchService service, HighSensitivityRegistrar registrar) {
+        private ConfigDirectoryWatch(Path directory, BiConsumer<Config, Exception> listener, WatchService service, HighSensitivityRegistrar registrar) {
             this.directory = directory;
             this.listener = listener;
             this.service = service;
@@ -127,7 +128,7 @@ public class ConfigWatcher implements Runnable {
                 service);
         }
 
-        private void watch(Consumer<io.fabric8.kubernetes.client.Config> listener, WatchService service) throws InterruptedException {
+        private void watch(BiConsumer<Config, Exception> listener, WatchService service) throws InterruptedException {
             for (WatchKey key = service.take(); key != null; key = service.take()) {
                 key.pollEvents().forEach((event) -> {
                     Path changed = getAbsolutePath(directory, (Path) event.context());
@@ -137,14 +138,17 @@ public class ConfigWatcher implements Runnable {
             }
         }
 
-        private void notifyListener(Consumer<Config> listener, Path changed) {
+        private void notifyListener(BiConsumer<Config, Exception> listener, Path changed) {
             if (isConfigPath(changed)) {
+                Config config = null;
+                Exception error = null;
                 try {
-                    var config = Config.autoConfigure(null);
-                    listener.accept(config);
+                    config = createConfig();
                 } catch (Exception e) {
-                    LOG.warn("Loading config at '" + changed +  "' failed.", e);
+                    error = e;
+                    LOG.warn("Loading config with changed '" + changed +  "' failed.", e);
                 }
+                listener.accept(config, error);
             }
         }
 
@@ -156,5 +160,9 @@ public class ConfigWatcher implements Runnable {
         private Path getAbsolutePath(Path directory, Path relativePath) {
             return directory.resolve(relativePath);
         }
+    }
+
+    protected @NotNull Config createConfig() {
+        return Config.autoConfigure(null);
     }
 }
