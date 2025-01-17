@@ -11,9 +11,11 @@
 package com.redhat.devtools.intellij.common.utils;
 
 import io.fabric8.kubernetes.client.Config;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,7 +25,9 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.List;
+import java.util.function.BiConsumer;
 
+import static com.redhat.devtools.intellij.common.utils.ConfigWatcher.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -39,7 +43,7 @@ public class ConfigWatcherTest {
     private Path config2;
     private Path config3;
 
-    private final ConfigWatcher.Listener listener = mock(ConfigWatcher.Listener.class);
+    private final Listener listener = mock(Listener.class);
     private final HighSensitivityRegistrar registrar = Mockito.mock(HighSensitivityRegistrar.class);
     private final WatchService service =  mock(WatchService.class);
 
@@ -94,6 +98,25 @@ public class ConfigWatcherTest {
         watcher.run();
         // then
         assertThat(reportingListener.isCalled()).isTrue();
+        assertThat(reportingListener.getUpdatedConfig()).isNotNull();
+    }
+
+    @Test
+    public void listener_is_called_if_config_file_is_changed_but_loading_it_throws() throws InterruptedException {
+        // given
+        ReportingListener reportingListener = new ReportingListener();
+        ConfigWatcher watcher = new TestableConfigWatcher(List.of(config1), reportingListener, registrar, service) {
+            @Override
+            protected @NotNull Config createConfig() {
+                throw new YAMLException("can't use the force");
+            }
+        };
+        createWatchKeyForService(config1, service); // config-file
+        // when
+        watcher.run();
+        // then
+        assertThat(reportingListener.isCalled()).isTrue();
+        assertThat(reportingListener.getError()).isInstanceOf(YAMLException.class);
     }
 
     @Test
@@ -152,17 +175,29 @@ public class ConfigWatcherTest {
         return key;
     }
 
-    private static class ReportingListener implements ConfigWatcher.Listener {
+    private static class ReportingListener implements Listener {
 
         private boolean called = false;
+        private Config updatedConfig;
+        private Exception error;
 
         @Override
-        public void onUpdate(Config updatedConfig) {
+        public void onUpdate(Config updatedConfig, Exception error) {
             this.called = true;
+            this.updatedConfig = updatedConfig;
+            this.error = error;
         }
 
-        public boolean isCalled() throws InterruptedException {
+        public boolean isCalled() {
             return called;
+        }
+
+        public Config getUpdatedConfig() {
+            return updatedConfig;
+        }
+
+        public Exception getError() {
+            return error;
         }
     }
 
@@ -178,6 +213,11 @@ public class ConfigWatcherTest {
         @Override
         protected WatchService createWatchService() throws IOException {
             return service;
+        }
+
+        @Override
+        protected @NotNull Config createConfig() {
+            return mock(Config.class);
         }
     }
 }
