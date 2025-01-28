@@ -47,11 +47,18 @@ public abstract class TreeAction extends AnAction {
     }
 
     protected Object getSelected(Tree tree) {
-        return tree.getSelectionModel().getSelectionPath().getLastPathComponent();
+        var selectionPath = tree.getSelectionModel().getSelectionPath();
+        if (selectionPath == null) {
+            return null;
+        }
+        return selectionPath.getLastPathComponent();
     }
 
     protected Object[] getSelectedNodes(Tree tree) {
         TreePath[] treePaths = tree.getSelectionModel().getSelectionPaths();
+        if (treePaths == null) {
+            return new Object[] {};
+        }
         return Arrays.stream(treePaths).map(path -> path.getLastPathComponent()).toArray(Object[]::new);
     }
 
@@ -88,6 +95,9 @@ public abstract class TreeAction extends AnAction {
     }
 
     public boolean isEnabled(Object[] selected) {
+        if (selected == null) {
+            return false;
+        }
         for (Object item : selected) {
             Object adjusted = adjust(item);
             if (adjusted == null
@@ -99,6 +109,9 @@ public abstract class TreeAction extends AnAction {
     }
 
     public boolean isVisible(Object selected) {
+        if (selected == null) {
+            return false;
+        }
         return Stream.of(filters)
                 .anyMatch(cl -> cl.isAssignableFrom(selected.getClass()));
     }
