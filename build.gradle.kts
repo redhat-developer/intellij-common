@@ -36,6 +36,17 @@ dependencies {
         create(IntelliJPlatformType.IntellijIdeaCommunity, platformVersion)
 
         // Bundled Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
+        // starting from 2024.3, all json related code is know on its own plugin
+        val platformBundledPlugins =  ArrayList<String>()
+        platformBundledPlugins.addAll(providers.gradleProperty("platformBundledPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.get())
+        /*
+         * platformVersion check for JSON breaking changes since 2024.3
+         */
+        if (platformVersion.startsWith("2024.3") || platformVersion.startsWith("25")) {
+            platformBundledPlugins.add("com.intellij.modules.json")
+        }
+        println("use bundled Plugins: $platformBundledPlugins")
+        bundledPlugins(platformBundledPlugins)
         bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
 
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
@@ -43,8 +54,6 @@ dependencies {
 
         // for local plugin -> https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin-faq.html#how-to-add-a-dependency-on-a-plugin-available-in-the-file-system
         //plugins.set(listOf(file("/path/to/plugin/")))
-
-        instrumentationTools()
 
         testFramework(TestFrameworkType.Platform)
     }
