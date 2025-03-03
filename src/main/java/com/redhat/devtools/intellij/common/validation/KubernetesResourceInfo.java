@@ -18,6 +18,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLValue;
@@ -34,27 +36,26 @@ public class KubernetesResourceInfo {
     private String namespace;
     private KubernetesTypeInfo typeInfo;
 
-    public KubernetesResourceInfo(String name, String namespace, KubernetesTypeInfo info) {
+    KubernetesResourceInfo(String name, String namespace, KubernetesTypeInfo info) {
         this.name = name;
         this.namespace = namespace;
         this.typeInfo = info;
     }
 
-    public KubernetesResourceInfo() {
-    }
+    private KubernetesResourceInfo() {}
 
-    public static KubernetesResourceInfo extractMeta(PsiFile file) {
+    public static KubernetesResourceInfo create(PsiFile file) {
         KubernetesResourceInfo resourceInfo = new KubernetesResourceInfo();
         if (file instanceof JsonFile) {
-            extractJsonMeta((JsonFile) file, resourceInfo);
+            create((JsonFile) file, resourceInfo);
         } else if (file instanceof YAMLFile) {
-            extractYAMLMeta((YAMLFile) file, resourceInfo);
+            create((YAMLFile) file, resourceInfo);
         }
-        resourceInfo.setTypeInfo(KubernetesTypeInfo.extractMeta(file));
+        resourceInfo.setTypeInfo(KubernetesTypeInfo.create(file));
         return resourceInfo;
     }
 
-    private static void extractJsonMeta(JsonFile file, KubernetesResourceInfo resourceInfo) {
+    private static void create(JsonFile file, KubernetesResourceInfo resourceInfo) {
         JsonValue content = file.getTopLevelValue();
         if (content == null) {
             return;
@@ -62,11 +63,19 @@ public class KubernetesResourceInfo {
         content.acceptChildren(new ResourceVisitor(resourceInfo));
     }
 
-    private static void extractYAMLMeta(YAMLFile file, KubernetesResourceInfo resourceInfo) {
+    private static void create(YAMLFile file, KubernetesResourceInfo resourceInfo) {
         if (file.getDocuments().isEmpty()) {
             return;
         }
-        YAMLValue content = file.getDocuments().get(0).getTopLevelValue();
+        // only use the first document in the file
+        create(file.getDocuments().get(0), resourceInfo);
+    }
+
+    private static void create(YAMLDocument document, KubernetesResourceInfo resourceInfo) {
+        if (document == null) {
+            return;
+        }
+        YAMLValue content = document.getTopLevelValue();
         if (content == null) {
             return;
         }
@@ -89,11 +98,7 @@ public class KubernetesResourceInfo {
         this.namespace = namespace;
     }
 
-    public KubernetesTypeInfo getTypeInfo() {
-        return typeInfo;
-    }
-
-    public void setTypeInfo(KubernetesTypeInfo typeInfo) {
+    private void setTypeInfo(KubernetesTypeInfo typeInfo) {
         this.typeInfo = typeInfo;
     }
 
@@ -121,22 +126,30 @@ public class KubernetesResourceInfo {
 
         private final KubernetesResourceInfo info;
 
-        public ResourceVisitor(KubernetesResourceInfo info) {
+        private ResourceVisitor(KubernetesResourceInfo info) {
             this.info = info;
         }
 
         @Override
         public void visitElement(@NotNull PsiElement element) {
-            if (!(element instanceof PsiNamedElement)) {
+            if (!(element instanceof PsiNamedElement namedElement)) {
                 return;
             }
-            PsiNamedElement namedElement = (PsiNamedElement) element;
             if (KEY_METADATA.equals(namedElement.getName())) {
-                if (namedElement instanceof JsonProperty) {
-                    ((JsonProperty) namedElement).getValue().acceptChildren(visitMetadata());
-                } else if (namedElement instanceof YAMLKeyValue) {
-                    ((YAMLKeyValue) namedElement).getValue().acceptChildren(visitMetadata());
+                var value = getValue(namedElement);
+                if (value != null) {
+                    value.acceptChildren(visitMetadata());
                 }
+            }
+        }
+
+        private @Nullable PsiElement getValue(PsiNamedElement namedElement) {
+            if (namedElement instanceof JsonProperty) {
+                return ((JsonProperty) namedElement).getValue();
+            } else if (namedElement instanceof YAMLKeyValue) {
+                return ((YAMLKeyValue) namedElement).getValue();
+            } else {
+                return null;
             }
         }
 
@@ -144,11 +157,10 @@ public class KubernetesResourceInfo {
         private PsiElementVisitor visitMetadata() {
             return new PsiElementVisitor() {
                 @Override
-                public void visitElement(PsiElement element) {
-                    if (!(element instanceof PsiNamedElement)) {
+                public void visitElement(@NotNull PsiElement element) {
+                    if (!(element instanceof PsiNamedElement namedElement)) {
                         return;
                     }
-                    PsiNamedElement namedElement = (PsiNamedElement) element;
                     if (KEY_NAME.equals(namedElement.getName())) {
                         setName(namedElement);
                     } else if (KEY_NAMESPACE.equals(namedElement.getName())) {
@@ -177,7 +189,7 @@ public class KubernetesResourceInfo {
                 }
 
                 private String valueOrNull(YAMLKeyValue key) {
-                    return key.getValueText() != null ? key.getValueText() : null;
+                    return key.getValueText();
                 }
 
             };

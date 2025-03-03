@@ -41,7 +41,7 @@ public class SchemaProvider implements JsonSchemaFileProvider {
         return ApplicationManager.getApplication().runReadAction((Computable<Boolean>) () -> {
             PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
             if (psiFile != null) {
-                KubernetesTypeInfo fileInfo = KubernetesTypeInfo.extractMeta(psiFile);
+                KubernetesTypeInfo fileInfo = KubernetesTypeInfo.create(psiFile);
                 return info.equals(fileInfo);
             }
             return false;
