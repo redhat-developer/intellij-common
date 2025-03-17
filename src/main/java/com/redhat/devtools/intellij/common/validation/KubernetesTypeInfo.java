@@ -10,19 +10,23 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.validation;
 
+import com.intellij.json.psi.JsonArray;
+import com.intellij.json.psi.JsonElement;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.YAMLDocument;
 import org.jetbrains.yaml.psi.YAMLFile;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
-import org.jetbrains.yaml.psi.YAMLValue;
+import org.jetbrains.yaml.psi.YAMLPsiElement;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -39,25 +43,127 @@ public class KubernetesTypeInfo {
         this.kind = kind;
     }
 
-    public KubernetesTypeInfo() {}
+    KubernetesTypeInfo() {}
 
-    public static KubernetesTypeInfo create(PsiFile file) {
-        if (file instanceof JsonFile) {
-            return create((JsonFile) file);
-        } else if (file instanceof YAMLFile) {
-            return create((YAMLFile) file);
+    public static KubernetesTypeInfo create(PsiElement element) {
+        if (element instanceof JsonElement jsonElement) {
+            return create(jsonElement);
+        } else if (element instanceof YAMLPsiElement yamlElement) {
+            return create(yamlElement);
         } else {
             return null;
         }
     }
 
-    private static KubernetesTypeInfo create(JsonFile file) {
-        var collector = new JsonKubernetesTypeInfoVisitor();
-        final JsonValue content = file.getTopLevelValue();
-        if (content != null) {
-            content.acceptChildren(collector);
+    private static @Nullable KubernetesTypeInfo create(YAMLPsiElement yamlElement) {
+        if (yamlElement instanceof YAMLFile yamlFile) {
+            return create(yamlFile);
+        } else if (yamlElement instanceof YAMLDocument yamlDocument) {
+            return create(yamlDocument);
+        } else {
+            return collect(yamlElement);
         }
+    }
+
+    private static @Nullable KubernetesTypeInfo create(JsonElement jsonElement) {
+        if (jsonElement instanceof JsonFile jsonFile) {
+            return create(jsonFile);
+        } else if (jsonElement instanceof JsonArray jsonArray) {
+            return create(jsonArray);
+        } else {
+            return collect(jsonElement);
+        }
+    }
+
+    public static KubernetesTypeInfo create(JsonFile file) {
+        if (file == null) {
+            return null;
+        }
+        var topLevelValue = file.getTopLevelValue();
+        if (topLevelValue instanceof JsonArray) {
+            return create(topLevelValue);
+        } else {
+            return create(topLevelValue);
+        }
+    }
+
+    private static KubernetesTypeInfo create(JsonArray array) {
+        if (array == null
+                || array.getChildren().length == 0) {
+            return null;
+        }
+
+        return create(array.getChildren()[0]);
+    }
+
+    private static KubernetesTypeInfo collect(JsonElement element) {
+        if (element == null) {
+            return null;
+        }
+        var collector = new JsonKubernetesTypeInfoVisitor();
+        element.acceptChildren(collector);
         return collector.getKubernetesTypeInfo();
+    }
+
+    public static List<KubernetesTypeInfo> createTypes(PsiFile file) {
+        if (file instanceof JsonFile jsonFile) {
+            return createTypes(jsonFile);
+        } else if (file instanceof YAMLFile yamlFile) {
+            return createTypes(yamlFile);
+        } else {
+            return null;
+        }
+    }
+
+    private static List<KubernetesTypeInfo> createTypes(JsonFile file) {
+        if (file == null) {
+            return null;
+        }
+
+        var topLevelValue = file.getTopLevelValue();
+        if (topLevelValue instanceof JsonArray array) {
+            return createTypes(array);
+        } else {
+            return createTypes(topLevelValue);
+        }
+    }
+
+    private static List<KubernetesTypeInfo> createTypes(JsonArray array) {
+        if (array == null) {
+            return null;
+        }
+        return Arrays.stream(array.getChildren())
+                .map(KubernetesTypeInfo::create)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private static List<KubernetesTypeInfo> createTypes(JsonElement element) {
+        if (element == null) {
+            return null;
+        }
+        return Collections.singletonList(create(element));
+    }
+
+    /**
+     * Creates a list of {@link KubernetesTypeInfo} for the given YAML file.
+     * If the given file contains several documents then KubernetesTypeInfo's for each document will be created.
+     * Returns {@code null} if the given file is {@code null} or has no documents.
+     *
+     * @param file the yaml file to create KubernetesTypeInfo's for
+     *
+     * @return KubernetesTypeInfos of all the documents in the given file
+     */
+    static List<KubernetesTypeInfo> createTypes(YAMLFile file) {
+        if (file == null
+                || file.getDocuments() == null) {
+            return null;
+        }
+
+        return file.getDocuments().stream()
+                .map(KubernetesTypeInfo::create)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     /**
@@ -67,7 +173,7 @@ public class KubernetesTypeInfo {
      *
      * @return the k8s metadata of the first document in the given file
      */
-    private static KubernetesTypeInfo create(YAMLFile file) {
+    public static KubernetesTypeInfo create(YAMLFile file) {
         if (file == null
                 || file.getDocuments().isEmpty()) {
             return null;
@@ -77,35 +183,20 @@ public class KubernetesTypeInfo {
         return create(file.getDocuments().get(0));
     }
 
-    /**
-     * Creates a list of {@link KubernetesTypeInfo} for the given YAML file.
-     * If the given file contains several documents then KubernetesTypeInfo's for each document will be created.
-     * If there's only a single document only a single KuberenetesTypeInfo is created.
-     * Returns {@code null} if the given file is {@code null} or empty.
-     *
-     * @param file the yaml file to create KubernetesTypeInfo's for
-     *
-     * @return KubernetesTypeInfos of all the documents in the given file
-     */
-    static List<KubernetesTypeInfo> createTypes(YAMLFile file) {
-        if (file == null
-                || file.getDocuments().isEmpty()) {
-            return null;
+    public static KubernetesTypeInfo create(YAMLDocument document) {
+        YAMLPsiElement element = null;
+        if (document != null) {
+            element = document.getTopLevelValue();
         }
-
-        return file.getDocuments().stream()
-                .map(KubernetesTypeInfo::create)
-                .toList();
+        return collect(element);
     }
 
-    public static KubernetesTypeInfo create(YAMLDocument document) {
-        final KubernetesTypeInfoVisitor collector = new YAMLKubernetesTypeInfoVisitor();
-        if (document != null) {
-            final YAMLValue content = document.getTopLevelValue();
-            if (content != null) {
-                content.acceptChildren(collector);
-            }
+    private static KubernetesTypeInfo collect(YAMLPsiElement element) {
+        if (element == null) {
+            return null;
         }
+        final KubernetesTypeInfoVisitor collector = new YAMLKubernetesTypeInfoVisitor();
+        element.acceptChildren(collector);
         return collector.getKubernetesTypeInfo();
     }
 
@@ -180,12 +271,13 @@ public class KubernetesTypeInfo {
     static class YAMLKubernetesTypeInfoVisitor extends KubernetesTypeInfoVisitor {
         @Override
         public void visitElement(@NotNull PsiElement element) {
-            if (element instanceof YAMLKeyValue property) {
-                String value = StringUtil.unquoteString(property.getValueText());
-                if (property.getKeyText().equals(KEY_API_VERSION)) {
-                    setApiGroup(value);
-                } else if (property.getKeyText().equals(KEY_KIND)) {
-                    setKind(value);
+            if (element instanceof YAMLKeyValue keyValue) {
+                var keyText = keyValue.getKeyText();
+                switch (keyText) {
+                    case KEY_API_VERSION ->
+                            setApiGroup(StringUtil.unquoteString(keyValue.getValueText()));
+                    case KEY_KIND ->
+                            setKind(StringUtil.unquoteString(keyValue.getValueText()));
                 }
             }
         }
@@ -197,11 +289,12 @@ public class KubernetesTypeInfo {
             if (element instanceof JsonProperty property
                     && property.getValue() != null
                     && property.getValue().getText() != null) {
-                String value = StringUtil.unquoteString(property.getValue().getText());
-                if (property.getName().equals(KEY_API_VERSION)) {
-                    setApiGroup(value);
-                } else if (property.getName().equals(KEY_KIND)) {
-                    setKind(value);
+                var name = property.getName();
+                switch(name) {
+                    case KEY_API_VERSION ->
+                            setApiGroup(StringUtil.unquoteString(property.getValue().getText()));
+                    case KEY_KIND ->
+                            setKind(StringUtil.unquoteString(property.getValue().getText()));
                 }
             }
         }
