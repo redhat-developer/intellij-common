@@ -82,20 +82,20 @@ public class KubernetesResourceInfo {
         content.acceptChildren(new ResourceVisitor(resourceInfo));
     }
 
-    public String getName() {
-        return name;
-    }
-
     public void setName(String name) {
         this.name = name;
     }
 
-    public String getNamespace() {
-        return namespace;
+    public String getName() {
+        return name;
     }
 
     public void setNamespace(String namespace) {
         this.namespace = namespace;
+    }
+
+    public String getNamespace() {
+        return namespace;
     }
 
     private void setTypeInfo(KubernetesTypeInfo typeInfo) {

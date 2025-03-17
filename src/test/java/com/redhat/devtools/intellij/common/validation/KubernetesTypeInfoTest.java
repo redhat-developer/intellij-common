@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.validation;
 
+import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
@@ -28,6 +29,7 @@ import java.util.List;
 
 import static com.redhat.devtools.intellij.common.validation.KubernetesTypeInfo.fromFileName;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.tuple;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
@@ -166,7 +168,7 @@ public class KubernetesTypeInfoTest {
         visitJsonKubernetesTypeInfo(apiVersion, kind, topLevelValue);
 
         // when
-        KubernetesTypeInfo type = KubernetesTypeInfo.create(jsonFile);
+        KubernetesTypeInfo type = KubernetesTypeInfo.create((PsiFile) jsonFile);
 
         // then
         assertThat(type).isNotNull();
@@ -194,6 +196,38 @@ public class KubernetesTypeInfoTest {
         assertThat(type).isNotNull();
         assertThat(type.getApiGroup()).isEqualTo("apps/v1");
         assertThat(type.getKind()).isEqualTo("Deployment");
+    }
+
+    @Test
+    public void createTypes_should_return_list_of_metas_for_json_file_with_multiple_documents() {
+        // given
+        JsonValue topLevelValue1 = mock(JsonValue.class);
+        @NotNull JsonProperty apiVersion1 = mockJsonProperty("apiVersion", "apps/v1");
+        @NotNull JsonProperty kind1 = mockJsonProperty("kind", "Deployment");
+        visitJsonKubernetesTypeInfo(apiVersion1, kind1, topLevelValue1);
+
+        JsonValue topLevelValue2 = mock(JsonValue.class);
+        @NotNull JsonProperty apiVersion2 = mockJsonProperty("apiVersion", "v1");
+        @NotNull JsonProperty kind2 = mockJsonProperty("kind", "Pod");
+        visitJsonKubernetesTypeInfo(apiVersion2, kind2, topLevelValue2);
+
+        JsonArray jsonArray = mock(JsonArray.class);
+        when(jsonArray.getChildren())
+                .thenReturn(new JsonValue[]{topLevelValue1, topLevelValue2});
+        JsonFile jsonFile = mock(JsonFile.class);
+        when(jsonFile.getTopLevelValue())
+                .thenReturn(jsonArray);
+        // when
+        List<KubernetesTypeInfo> types = KubernetesTypeInfo.createTypes(jsonFile);
+
+        // then
+        assertThat(types).isNotNull();
+        assertThat(types)
+                .extracting(KubernetesTypeInfo::getApiGroup, KubernetesTypeInfo::getKind)
+                .containsExactly(
+                        tuple("apps/v1", "Deployment"),
+                        tuple("v1", "Pod")
+                );
     }
 
     @Test
@@ -299,7 +333,7 @@ public class KubernetesTypeInfoTest {
     }
 
     @Test
-    public void createTypesshould_return_null_for_null_yaml_file() {
+    public void createTypes_should_return_null_for_null_yaml_file() {
         // when
         List<KubernetesTypeInfo> types = KubernetesTypeInfo.createTypes(null);
 
@@ -308,17 +342,17 @@ public class KubernetesTypeInfoTest {
     }
 
     @Test
-    public void createTypesshould_return_null_for_empty_yaml_file() {
+    public void createTypes_should_return_null_for_empty_yaml_file() {
         // given
         YAMLFile mockYamlFile = mock(YAMLFile.class);
         when(mockYamlFile.getDocuments())
                 .thenReturn(Collections.emptyList());
 
         // when
-        List<KubernetesTypeInfo> types = KubernetesTypeInfo.createTypes(mockYamlFile);
+        List<KubernetesTypeInfo> types = KubernetesTypeInfo.createTypes((PsiFile) mockYamlFile);
 
         // then
-        assertThat(types).isNull();
+        assertThat(types).isEmpty();
     }
 
     @Test
@@ -349,11 +383,12 @@ public class KubernetesTypeInfoTest {
         List<KubernetesTypeInfo> types = KubernetesTypeInfo.createTypes(yamlFile);
 
         // then
-        assertThat(types).hasSize(2);
-        assertThat(types.get(0).getApiGroup()).isEqualTo("apps/v1");
-        assertThat(types.get(0).getKind()).isEqualTo("Deployment");
-        assertThat(types.get(1).getApiGroup()).isEqualTo("v1");
-        assertThat(types.get(1).getKind()).isEqualTo("Pod");
+        assertThat(types)
+                .extracting(KubernetesTypeInfo::getApiGroup, KubernetesTypeInfo::getKind)
+                .containsExactly(
+                        tuple("apps/v1", "Deployment"),
+                        tuple("v1", "Pod")
+                );
     }
 
     private static @NotNull YAMLKeyValue mockYAMLKeyValue(String key, String value) {
