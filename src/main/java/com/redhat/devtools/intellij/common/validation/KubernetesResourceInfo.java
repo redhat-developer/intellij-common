@@ -102,6 +102,20 @@ public class KubernetesResourceInfo {
         this.typeInfo = typeInfo;
     }
 
+    public String getApiGroup() {
+        if (typeInfo == null) {
+            return null;
+        }
+        return typeInfo.getApiGroup();
+    }
+
+    public String getKind() {
+        if (typeInfo == null) {
+            return null;
+        }
+        return typeInfo.getKind();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

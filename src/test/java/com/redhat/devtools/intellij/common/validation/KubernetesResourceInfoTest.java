@@ -35,6 +35,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class KubernetesResourceInfoTest {
@@ -295,6 +296,54 @@ public class KubernetesResourceInfoTest {
         assertThat(resourceInfo).isNotNull();
         assertThat(resourceInfo.getName()).isNull();
         assertThat(resourceInfo.getNamespace()).isNull();
+    }
+
+    @Test
+    public void getApiGroup_returns_apiGroup_of_typeInfo() {
+        // given
+        KubernetesResourceInfo info = new KubernetesResourceInfo("obiwan", "stewjon", typeInfo);
+
+        // when
+        info.getApiGroup();
+
+        // then
+        verify(typeInfo).getApiGroup();
+    }
+
+    @Test
+    public void getApiGroup_returns_null_given_typeInfo_is_null() {
+        // given
+        KubernetesResourceInfo info = new KubernetesResourceInfo("obiwan", "tatooine", null);
+
+        // when
+        String apiGroup = info.getApiGroup();
+
+        // then
+        assertThat(apiGroup).isNull();
+    }
+
+    @Test
+    public void getKind_returns_kind_of_typeInfo() {
+        // given
+        KubernetesResourceInfo info = new KubernetesResourceInfo("luke", "stewjon", typeInfo);
+
+        // when
+        info.getKind();
+
+        // then
+        verify(typeInfo).getKind();
+    }
+
+    @Test
+    public void getKind_returns_null_given_typeInfo_is_nul() {
+        // given
+        KubernetesResourceInfo info = new KubernetesResourceInfo("luke", "stewjon", null);
+
+        // when
+        String kind = info.getKind();
+
+        // then
+        assertThat(kind).isNull();
     }
 
     private void mockCreateKubernetesTypeInfo(KubernetesTypeInfo typeInfo, PsiFile file) {
