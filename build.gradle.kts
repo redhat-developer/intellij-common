@@ -28,11 +28,6 @@ repositories {
     intellijPlatform {
         defaultRepositories()
     }
-    // Local repository to publish to
-    maven {
-        name = "LocalRepo"
-        url = uri("file://${layout.buildDirectory}/local-repository")
-    }
 }
 
 dependencies {
