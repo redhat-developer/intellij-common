@@ -45,7 +45,7 @@ dependencies {
         /*
          * starting from 2024.3, all json related code is know on its own plugin
          */
-        if (platformVersion.startsWith("2024.3") || platformVersion.substring(2).startsWith("25")) {
+        if (platformVersion.startsWith("2024.3") || platformVersion.startsWith("2025.") || platformVersion.startsWith("25")) {
             platformBundledPlugins.add("com.intellij.modules.json")
         }
         println("use bundled Plugins: $platformBundledPlugins")
