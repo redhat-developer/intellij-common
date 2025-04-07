@@ -8,7 +8,6 @@ plugins {
     alias(libs.plugins.gradleIntelliJPlugin) // Gradle IntelliJ Plugin
     id("jacoco") // Code coverage
     id("maven-publish")
-    alias(libs.plugins.gradleNexusPublishPlugin)
 }
 
 group = "com.redhat.devtools.intellij"
@@ -29,25 +28,22 @@ repositories {
     intellijPlatform {
         defaultRepositories()
     }
+    // Local repository to publish to
+    maven {
+        name = "LocalRepo"
+        url = uri("file://${layout.buildDirectory}/local-repository")
+    }
 }
 
 dependencies {
     intellijPlatform {
-        create(IntelliJPlatformType.IntellijIdeaCommunity, platformVersion)
+        intellijIdeaCommunity(platformVersion)
 
         // Bundled Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
-        // starting from 2024.3, all json related code is know on its own plugin
         val platformBundledPlugins =  ArrayList<String>()
         platformBundledPlugins.addAll(providers.gradleProperty("platformBundledPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.get())
-        /*
-         * platformVersion check for JSON breaking changes since 2024.3
-         */
-        if (platformVersion.startsWith("2024.3") || platformVersion.startsWith("25")) {
-            platformBundledPlugins.add("com.intellij.modules.json")
-        }
         println("use bundled Plugins: $platformBundledPlugins")
         bundledPlugins(platformBundledPlugins)
-        bundledPlugins(providers.gradleProperty("platformBundledPlugins").map { it.split(',') })
 
         // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file for plugin from JetBrains Marketplace.
         plugins(providers.gradleProperty("platformPlugins").map { it.split(',') })
@@ -107,18 +103,6 @@ tasks {
 
 }
 
-nexusPublishing {
-    packageGroup.set("JBoss Releases Staging Profile")
-    repositories {
-        create("jbossNexus") {
-            nexusUrl.set(uri("https://repository.jboss.org/nexus/service/local/"))
-            snapshotRepositoryUrl.set(uri("https://repository.jboss.org/nexus/content/repositories/snapshots/"))
-            username.set(project.properties["nexusUser"].toString()) // defaults to project.properties["myNexusUsername"]
-            password.set(project.properties["nexusPassword"].toString()) // defaults to project.properties["myNexusPassword"]
-        }
-    }
-}
-
 val testJarFile = file("${layout.buildDirectory.get().asFile.absolutePath}/libs/intellij-common-${version}-test.jar")
 val testArtifact = artifacts.add("archives", testJarFile) {
     type = "test"
@@ -155,6 +139,14 @@ publishing {
                     url.set("https://github.com/redhat-developer/intellij-common/")
                 }
             }
+        }
+    }
+    repositories {
+        maven {
+            val baseUrl = layout.buildDirectory.dir("repository/").get()
+            val releasesRepoUrl = baseUrl.dir("releases")
+            val snapshotsRepoUrl = baseUrl.dir("snapshots")
+            url = uri(if (version.toString().endsWith("SNAPSHOT")) snapshotsRepoUrl else releasesRepoUrl)
         }
     }
 }
