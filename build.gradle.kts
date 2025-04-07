@@ -42,6 +42,12 @@ dependencies {
         // Bundled Plugin Dependencies. Uses `platformBundledPlugins` property from the gradle.properties file for bundled IntelliJ Platform plugins.
         val platformBundledPlugins =  ArrayList<String>()
         platformBundledPlugins.addAll(providers.gradleProperty("platformBundledPlugins").map { it.split(',').map(String::trim).filter(String::isNotEmpty) }.get())
+        /*
+         * starting from 2024.3, all json related code is know on its own plugin
+         */
+        if (platformVersion.startsWith("2024.3") || platformVersion.substring(2).startsWith("25")) {
+            platformBundledPlugins.add("com.intellij.modules.json")
+        }
         println("use bundled Plugins: $platformBundledPlugins")
         bundledPlugins(platformBundledPlugins)
 
