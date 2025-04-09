@@ -11,7 +11,7 @@ mockito-core = "5.14.2"
 opentest4j = "1.3.0"
 
 # plugins
-gradleIntelliJPlugin = "2.2.1"
+gradleIntelliJPlugin = "2.5.0"
 gradleNexusPublishPlugin = "2.0.0"
 
 [libraries]
