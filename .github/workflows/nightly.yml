@@ -68,6 +68,6 @@ jobs:
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action Bot"
           pushd build/repository
-          git add com/
+          git add snapshots/
           git commit -m "Publish ${CURRENT_VERSION} (${{github.run_number}})"
           git push -f origin repository
