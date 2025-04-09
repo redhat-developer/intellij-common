@@ -64,9 +64,10 @@ jobs:
         run: |
           CURRENT_VERSION=$(grep "projectVersion=" gradle.properties | cut -d'=' -f2)
           ./gradlew publish
-          
+
           git config --global user.email "action@github.com"
           git config --global user.name "GitHub Action Bot"
-          mv build/repository mvn-repo
-          git commit -am "Publish ${CURRENT_VERSION} (${{github.run_number}})"
+          pushd mvn-repo
+          git add com/
+          git commit -m "Publish ${CURRENT_VERSION} (${{github.run_number}})"
           git push -f origin repository
