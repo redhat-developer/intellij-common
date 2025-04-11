@@ -10,9 +10,11 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.validation;
 
+import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.yaml.psi.YAMLDocument;
@@ -28,6 +30,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -108,6 +111,65 @@ public class KubernetesResourceInfoTest {
         when(namespaceValue.getText())
                 .thenReturn("\"stewjon\"");
 
+
+        doAnswer(invocation -> {
+            PsiElementVisitor visitor = invocation.getArgument(0);
+            visitor.visitElement(metadataProperty);
+            return null;
+        }).when(jsonTopLevelValue).acceptChildren(any(PsiElementVisitor.class));
+
+        doAnswer(invocation -> {
+            PsiElementVisitor visitor = invocation.getArgument(0);
+            visitor.visitElement(nameProperty);
+            visitor.visitElement(namespaceProperty);
+            return null;
+        }).when(metadataValue).acceptChildren(any(PsiElementVisitor.class));
+
+        mockCreateKubernetesTypeInfo(typeInfo, jsonFile);
+
+        // when
+        KubernetesResourceInfo resourceInfo = KubernetesResourceInfo.create(jsonFile);
+
+        // then
+        assertThat(resourceInfo).isNotNull();
+        assertThat(resourceInfo.getName()).isEqualTo("\"obiwan\"");
+        assertThat(resourceInfo.getNamespace()).isEqualTo("\"stewjon\"");
+    }
+
+    @Test
+    public void create_returns_info_for_first_array_entry_in_multiresource_json_file() {
+        // given
+        JsonArray jsonTopLevelValue = mock(JsonArray.class);
+        JsonValue arrayEntry = mock(JsonValue.class);
+        JsonProperty metadataProperty = mock(JsonProperty.class);
+        JsonValue metadataValue = mock(JsonValue.class);
+        JsonProperty nameProperty = mock(JsonProperty.class);
+        JsonProperty namespaceProperty = mock(JsonProperty.class);
+        JsonValue nameValue = mock(JsonValue.class);
+        JsonValue namespaceValue = mock(JsonValue.class);
+
+        when(jsonFile.getTopLevelValue())
+                .thenReturn(jsonTopLevelValue);
+        when(jsonTopLevelValue.getChildren())
+                .thenReturn(Collections
+                        .singletonList(arrayEntry)
+                        .toArray(new PsiElement[]{}));
+        when(metadataProperty.getName())
+                .thenReturn(KEY_METADATA);
+        when(metadataProperty.getValue())
+                .thenReturn(metadataValue);
+        when(nameProperty.getName())
+                .thenReturn(KEY_NAME);
+        when(namespaceProperty.getName())
+                .thenReturn(KEY_NAMESPACE);
+        when(nameProperty.getValue())
+                .thenReturn(nameValue);
+        when(namespaceProperty.getValue())
+                .thenReturn(namespaceValue);
+        when(nameValue.getText())
+                .thenReturn("\"obiwan\"");
+        when(namespaceValue.getText())
+                .thenReturn("\"stewjon\"");
 
         doAnswer(invocation -> {
             PsiElementVisitor visitor = invocation.getArgument(0);
