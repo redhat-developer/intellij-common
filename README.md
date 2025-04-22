@@ -1,5 +1,5 @@
 # IntelliJ Common
-[release-svg]: https://img.shields.io/nexus/r/com.redhat.devtools.intellij/intellij-common?server=https%3A%2F%2Frepository.jboss.org%2Fnexus
+[release-svg]: https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fredhat-developer%2Fintellij-common%2Frepository%2Freleases%2Fcom%2Fredhat%2Fdevtools%2Fintellij%2Fintellij-common%2Fmaven-metadata.xml
 [nightly-svg]: https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fraw.githubusercontent.com%2Fredhat-developer%2Fintellij-common%2Frepository%2Fsnapshots%2Fcom%2Fredhat%2Fdevtools%2Fintellij%2Fintellij-common%2Fmaven-metadata.xml
 ![Build status](https://github.com/redhat-developer/intellij-common/actions/workflows/ci.yml/badge.svg)
 ![Validate against IJ versions](https://github.com/redhat-developer/intellij-common/actions/workflows/IJ.yml/badge.svg)
@@ -69,7 +69,7 @@ Example of a lesson
 
 ## Release notes
 
-See the change log.
+See the change log on the [release tab](https://github.com/redhat-developer/intellij-common/releases).
 
 Contributing
 ============
