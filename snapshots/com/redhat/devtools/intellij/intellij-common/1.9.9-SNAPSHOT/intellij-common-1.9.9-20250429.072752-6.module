@@ -1,0 +1,92 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.redhat.devtools.intellij",
+    "module": "intellij-common",
+    "version": "1.9.9-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "intellijPlatformComposedJar",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "composed-jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.fabric8",
+          "module": "kubernetes-client",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "io.fabric8",
+          "module": "openshift-client",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "io.fabric8",
+          "module": "kubernetes-httpclient-okhttp",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "com.fasterxml.jackson.core",
+          "module": "jackson-core",
+          "version": {
+            "requires": "2.18.3"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-exec",
+          "version": {
+            "requires": "1.4.0"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-lang3",
+          "version": {
+            "requires": "3.17.0"
+          }
+        },
+        {
+          "group": "com.twelvemonkeys.common",
+          "module": "common-lang",
+          "version": {
+            "requires": "3.9.4"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "intellij-common-1.9.9-SNAPSHOT.jar",
+          "url": "intellij-common-1.9.9-SNAPSHOT.jar",
+          "size": 174068,
+          "sha512": "9de541d866890624b1c94efede054a11e3a08c59be76bbbc38919ae93b4bef817706d158b100ecc5adbdcc85b32aa185afc48a0439c01c10a31fc5def505f1bb",
+          "sha256": "58d9ef285adcd1805205c39e1ac62bb0de451d652b3b592afe188bd125641b43",
+          "sha1": "6b4be7d6440d5bc34df70ba06d9653984e2f5f5c",
+          "md5": "1b69a9c6b624996bedbdb899e8e67124"
+        }
+      ]
+    }
+  ]
+}
