@@ -3,44 +3,44 @@
   <groupId>com.redhat.devtools.intellij</groupId>
   <artifactId>intellij-common</artifactId>
   <versioning>
-    <lastUpdated>20250429072752</lastUpdated>
+    <lastUpdated>20250430072506</lastUpdated>
     <snapshot>
-      <timestamp>20250429.072752</timestamp>
-      <buildNumber>6</buildNumber>
+      <timestamp>20250430.072506</timestamp>
+      <buildNumber>7</buildNumber>
     </snapshot>
     <snapshotVersions>
       <snapshotVersion>
-        <extension>jar</extension>
-        <value>1.9.9-20250429.072752-6</value>
-        <updated>20250429072752</updated>
-      </snapshotVersion>
-      <snapshotVersion>
         <extension>module</extension>
-        <value>1.9.9-20250429.072752-6</value>
-        <updated>20250429072752</updated>
+        <value>1.9.9-20250430.072506-7</value>
+        <updated>20250430072506</updated>
       </snapshotVersion>
       <snapshotVersion>
-        <extension>pom</extension>
-        <value>1.9.9-20250429.072752-6</value>
-        <updated>20250429072752</updated>
+        <extension>jar</extension>
+        <value>1.9.9-20250430.072506-7</value>
+        <updated>20250430072506</updated>
       </snapshotVersion>
       <snapshotVersion>
         <classifier>javadoc</classifier>
         <extension>jar</extension>
-        <value>1.9.9-20250429.072752-6</value>
-        <updated>20250429072752</updated>
-      </snapshotVersion>
-      <snapshotVersion>
-        <classifier>test</classifier>
-        <extension>jar</extension>
-        <value>1.9.9-20250429.072752-6</value>
-        <updated>20250429072752</updated>
+        <value>1.9.9-20250430.072506-7</value>
+        <updated>20250430072506</updated>
       </snapshotVersion>
       <snapshotVersion>
         <classifier>sources</classifier>
         <extension>jar</extension>
-        <value>1.9.9-20250429.072752-6</value>
-        <updated>20250429072752</updated>
+        <value>1.9.9-20250430.072506-7</value>
+        <updated>20250430072506</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>1.9.9-20250430.072506-7</value>
+        <updated>20250430072506</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <classifier>test</classifier>
+        <extension>jar</extension>
+        <value>1.9.9-20250430.072506-7</value>
+        <updated>20250430072506</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>
