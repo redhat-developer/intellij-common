@@ -19,7 +19,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.io.HttpRequests;
 import com.redhat.devtools.intellij.common.CommonConstants;
-import com.twelvemonkeys.lang.Platform;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -30,6 +29,7 @@ import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedInputStream;
@@ -161,13 +161,24 @@ public class DownloadHelper {
     }
 
     private ToolsConfig.Platform getPlatformBasedOnOs(ToolsConfig.Tool tool) {
-        String osArch = Platform.arch().toString();
-        String osId = Platform.os().id();
+        String osArch = SystemUtils.OS_ARCH;
+        String osId = getPlatformOS();
         if (tool.getPlatforms().containsKey(osId + "-" + osArch)) {
                 return tool.getPlatforms().get(osId + "-" + osArch);
         }
         return tool.getPlatforms().get(osId);
+    }
 
+    private String getPlatformOS() {
+        if (SystemUtils.IS_OS_WINDOWS) {
+            return "win";
+        } else if (SystemUtils.IS_OS_MAC_OSX) {
+            return "osx";
+        } else if (SystemUtils.IS_OS_LINUX) {
+            return "lnx";
+        } else {
+            throw new IllegalArgumentException("Unsupported operating system " + SystemUtils.OS_NAME);
+        }
     }
 
     private CompletableFuture<ToolInstance> downloadInBackground(String toolName, ToolsConfig.Platform platform, Path path, String cmd, ToolsConfig.Tool tool, String version, String checksum) {
