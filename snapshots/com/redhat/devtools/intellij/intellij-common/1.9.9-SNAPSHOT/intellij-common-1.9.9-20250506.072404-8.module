@@ -1,0 +1,85 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.redhat.devtools.intellij",
+    "module": "intellij-common",
+    "version": "1.9.9-SNAPSHOT",
+    "attributes": {
+      "org.gradle.status": "integration"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "intellijPlatformComposedJar",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "composed-jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.fabric8",
+          "module": "kubernetes-client",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "io.fabric8",
+          "module": "openshift-client",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "io.fabric8",
+          "module": "kubernetes-httpclient-okhttp",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "com.fasterxml.jackson.core",
+          "module": "jackson-core",
+          "version": {
+            "requires": "2.19.0"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-exec",
+          "version": {
+            "requires": "1.4.0"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-lang3",
+          "version": {
+            "requires": "3.17.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "intellij-common-1.9.9-SNAPSHOT.jar",
+          "url": "intellij-common-1.9.9-SNAPSHOT.jar",
+          "size": 174197,
+          "sha512": "f9fdff4b3ecf3934d0485e4c759ba94eae45ce1a77534ff934457756ed70b39f4105ff15a6bc1dd0acfe61241fe7b5f9be2c541c021f751d6da1e27bf9e1e689",
+          "sha256": "97b15095755d2ffd1c353f13c9acdecaf10a96d6a62b13df1898fc91885abefb",
+          "sha1": "49bc0f128e9e64572147e5165bbb64df26d28ee7",
+          "md5": "7a5e4a8d02fc948212c8421b26ab173d"
+        }
+      ]
+    }
+  ]
+}
