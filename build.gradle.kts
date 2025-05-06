@@ -61,7 +61,6 @@ dependencies {
     implementation(libs.jackson.core)
     implementation(libs.commons.exec)
     implementation(libs.commons.lang3)
-    implementation(libs.common.lang)
 
     // for unit tests
     testImplementation(libs.junit)
