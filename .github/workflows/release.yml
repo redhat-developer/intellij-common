@@ -75,6 +75,7 @@ jobs:
           git add releases/
           git commit -m "Publish ${CURRENT_VERSION} (${{github.run_number}})"
           git push -f origin repository
+          
 
       # Set next SNAPSHOT version
       - name: Increment Plugin Version
@@ -88,9 +89,11 @@ jobs:
           NEW_VERSION="${VERSION_NUM[0]}.${VERSION_NUM[1]}.${VERSION_NUM[2]}-SNAPSHOT"
           awk -v new_version="$NEW_VERSION" '/projectVersion=/{sub(/=.*/, "=" new_version)}1' gradle.properties > tmpfile && mv tmpfile gradle.properties
           echo "Set $NEW_VERSION in gradle.properties"
-
+          git checkout -b $NEW_VERSION
           git commit -sam "chore(skip-release): set version to $NEW_VERSION"
-          git push -u origin
+          git push -u origin $NEW_VERSION
+          gh pr create -B main -H $NEW_VERSION --title "chore(skip-release): set version to $NEW_VERSION" --body 'Created by Github action'
+
       - name: Simple conventional changelog
         uses: redhat-developer/simple-conventional-changelog@0a6db1ac3910c2cf66f2e1a530951dba1ece8540 #0.0.12
         id: changelog
@@ -99,6 +102,7 @@ jobs:
           current-tag: ${{ inputs.release_version }}
           types-mapping: 'feat:Features,fix:Bug Fixes,docs:Documentation,refactor:Refactoring,build:Builds,chore:Other'
           scopes-mapping: 'UI:UI,Hub:Hub'
+
       # Create a new GitHub release
       - name: Create GitHub Release
         env:
@@ -110,6 +114,7 @@ jobs:
           ${{ steps.changelog.outputs.changelog }}
           EOM
           )"
+
       - name: Upload Release Asset
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
