@@ -26,8 +26,20 @@ jobs:
       # Setup Gradle
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-      - name: Build with Gradle
-        run: ./gradlew build
+
+      # Build plugin
+      - name: Build Plugin
+        run: ./gradlew assemble build
+
+      - name: Set Release Version
+        shell: bash
+        run: |
+          CURRENT_VERSION=$(grep "projectVersion=" gradle.properties | cut -d'=' -f2)
+          NEW_VERSION=${{ inputs.release_version }}
+          awk -v current="$CURRENT_VERSION" -v new="$NEW_VERSION" 'BEGIN {FS=OFS="="} $1 == "projectVersion" { $2 = new }1' gradle.properties > tmpfile && mv tmpfile gradle.properties
+          echo "Release version: $NEW_VERSION"
+          echo "PLUGIN_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
+
       - name: Tag Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,19 +53,29 @@ jobs:
           fi
           git tag ${{ inputs.release_version }}
           git push origin ${{ inputs.release_version }}
-      - name: Set Release Version
-        shell: bash
+
+      # Publish to Maven repo
+      - name: Checkout Maven Repo
+        uses: actions/checkout@v4
+        with:
+          ref: repository
+          path: build/repository
+
+      - name: Deploy to Maven Repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           CURRENT_VERSION=$(grep "projectVersion=" gradle.properties | cut -d'=' -f2)
-          NEW_VERSION=${{ inputs.release_version }}
-          awk -v current="$CURRENT_VERSION" -v new="$NEW_VERSION" 'BEGIN {FS=OFS="="} $1 == "projectVersion" { $2 = new }1' gradle.properties > tmpfile && mv tmpfile gradle.properties
-          echo "Release version: $NEW_VERSION"
-          echo "PLUGIN_VERSION=${NEW_VERSION}" >> $GITHUB_ENV
-      # Publish the plugin to local release repo
-      - name: Publish Library
-        run: |
           ./gradlew publish
           echo "Published $PLUGIN_VERSION."
+
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action Bot"
+          pushd build/repository
+          git add releases/
+          git commit -m "Publish ${CURRENT_VERSION} (${{github.run_number}})"
+          git push -f origin repository
+
       # Set next SNAPSHOT version
       - name: Increment Plugin Version
         env:
@@ -66,9 +88,9 @@ jobs:
           NEW_VERSION="${VERSION_NUM[0]}.${VERSION_NUM[1]}.${VERSION_NUM[2]}-SNAPSHOT"
           awk -v new_version="$NEW_VERSION" '/projectVersion=/{sub(/=.*/, "=" new_version)}1' gradle.properties > tmpfile && mv tmpfile gradle.properties
           echo "Set $NEW_VERSION in gradle.properties"
-          git checkout -b $NEW_VERSION
+
           git commit -sam "chore(skip-release): set version to $NEW_VERSION"
-          git push -u origin $NEW_VERSION
+          git push -u origin
       - name: Simple conventional changelog
         uses: redhat-developer/simple-conventional-changelog@0a6db1ac3910c2cf66f2e1a530951dba1ece8540 #0.0.12
         id: changelog
