@@ -3,10 +3,11 @@
   <groupId>com.redhat.devtools.intellij</groupId>
   <artifactId>intellij-common</artifactId>
   <versioning>
-    <latest>1.9.9-SNAPSHOT</latest>
+    <latest>1.9.10-SNAPSHOT</latest>
     <versions>
       <version>1.9.9-SNAPSHOT</version>
+      <version>1.9.10-SNAPSHOT</version>
     </versions>
-    <lastUpdated>20250506072412</lastUpdated>
+    <lastUpdated>20250514121211</lastUpdated>
   </versioning>
 </metadata>
