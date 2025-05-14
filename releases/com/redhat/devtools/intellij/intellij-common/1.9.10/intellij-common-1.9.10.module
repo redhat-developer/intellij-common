@@ -1,0 +1,85 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.redhat.devtools.intellij",
+    "module": "intellij-common",
+    "version": "1.9.10",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "intellijPlatformComposedJar",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 17,
+        "org.gradle.libraryelements": "composed-jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "io.fabric8",
+          "module": "kubernetes-client",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "io.fabric8",
+          "module": "openshift-client",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "io.fabric8",
+          "module": "kubernetes-httpclient-okhttp",
+          "version": {
+            "requires": "7.1.0"
+          }
+        },
+        {
+          "group": "com.fasterxml.jackson.core",
+          "module": "jackson-core",
+          "version": {
+            "requires": "2.18.3"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-exec",
+          "version": {
+            "requires": "1.4.0"
+          }
+        },
+        {
+          "group": "org.apache.commons",
+          "module": "commons-lang3",
+          "version": {
+            "requires": "3.17.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "intellij-common-1.9.10.jar",
+          "url": "intellij-common-1.9.10.jar",
+          "size": 174189,
+          "sha512": "ca089585757ee8ece3882ce15f7453afbabb10d83412fc2d07533bf9df9d978b94fac51304b1719b1a18c4f4c09106cd58a3141248728d955c6af8605ba2a75f",
+          "sha256": "a68602e1689cd403cfb99940d189ade716952cf428e33c9395ebb37722b548a0",
+          "sha1": "493b6d1230c9d61d2e5e7193a4f550d7a4f6f3a7",
+          "md5": "034057faecdab3cfddcfee27c4691a00"
+        }
+      ]
+    }
+  ]
+}
