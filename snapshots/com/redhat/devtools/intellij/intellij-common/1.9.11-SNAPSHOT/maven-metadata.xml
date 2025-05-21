@@ -3,44 +3,44 @@
   <groupId>com.redhat.devtools.intellij</groupId>
   <artifactId>intellij-common</artifactId>
   <versioning>
-    <lastUpdated>20250515073226</lastUpdated>
+    <lastUpdated>20250521073027</lastUpdated>
     <snapshot>
-      <timestamp>20250515.073226</timestamp>
-      <buildNumber>1</buildNumber>
+      <timestamp>20250521.073027</timestamp>
+      <buildNumber>2</buildNumber>
     </snapshot>
     <snapshotVersions>
       <snapshotVersion>
-        <classifier>sources</classifier>
+        <classifier>test</classifier>
         <extension>jar</extension>
-        <value>1.9.11-20250515.073226-1</value>
-        <updated>20250515073226</updated>
-      </snapshotVersion>
-      <snapshotVersion>
-        <extension>jar</extension>
-        <value>1.9.11-20250515.073226-1</value>
-        <updated>20250515073226</updated>
+        <value>1.9.11-20250521.073027-2</value>
+        <updated>20250521073027</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>module</extension>
-        <value>1.9.11-20250515.073226-1</value>
-        <updated>20250515073226</updated>
+        <value>1.9.11-20250521.073027-2</value>
+        <updated>20250521073027</updated>
       </snapshotVersion>
       <snapshotVersion>
-        <classifier>test</classifier>
         <extension>jar</extension>
-        <value>1.9.11-20250515.073226-1</value>
-        <updated>20250515073226</updated>
+        <value>1.9.11-20250521.073027-2</value>
+        <updated>20250521073027</updated>
       </snapshotVersion>
       <snapshotVersion>
         <extension>pom</extension>
-        <value>1.9.11-20250515.073226-1</value>
-        <updated>20250515073226</updated>
+        <value>1.9.11-20250521.073027-2</value>
+        <updated>20250521073027</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <classifier>sources</classifier>
+        <extension>jar</extension>
+        <value>1.9.11-20250521.073027-2</value>
+        <updated>20250521073027</updated>
       </snapshotVersion>
       <snapshotVersion>
         <classifier>javadoc</classifier>
         <extension>jar</extension>
-        <value>1.9.11-20250515.073226-1</value>
-        <updated>20250515073226</updated>
+        <value>1.9.11-20250521.073027-2</value>
+        <updated>20250521073027</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>
