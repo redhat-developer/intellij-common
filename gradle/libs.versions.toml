@@ -1,7 +1,7 @@
 [versions]
 # libraries
 junit = "4.13.2"
-kubernetes-client = "7.3.0"
+kubernetes-client = "7.3.1"
 jackson-core = "2.19.0"
 commons-lang3 = "3.17.0"
 commons-exec = "1.4.0"
