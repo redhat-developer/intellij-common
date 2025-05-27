@@ -3,44 +3,44 @@
   <groupId>com.redhat.devtools.intellij</groupId>
   <artifactId>intellij-common</artifactId>
   <versioning>
-    <lastUpdated>20250521073027</lastUpdated>
+    <lastUpdated>20250527072536</lastUpdated>
     <snapshot>
-      <timestamp>20250521.073027</timestamp>
-      <buildNumber>2</buildNumber>
+      <timestamp>20250527.072536</timestamp>
+      <buildNumber>3</buildNumber>
     </snapshot>
     <snapshotVersions>
       <snapshotVersion>
         <classifier>test</classifier>
         <extension>jar</extension>
-        <value>1.9.11-20250521.073027-2</value>
-        <updated>20250521073027</updated>
-      </snapshotVersion>
-      <snapshotVersion>
-        <extension>module</extension>
-        <value>1.9.11-20250521.073027-2</value>
-        <updated>20250521073027</updated>
-      </snapshotVersion>
-      <snapshotVersion>
-        <extension>jar</extension>
-        <value>1.9.11-20250521.073027-2</value>
-        <updated>20250521073027</updated>
-      </snapshotVersion>
-      <snapshotVersion>
-        <extension>pom</extension>
-        <value>1.9.11-20250521.073027-2</value>
-        <updated>20250521073027</updated>
+        <value>1.9.11-20250527.072536-3</value>
+        <updated>20250527072536</updated>
       </snapshotVersion>
       <snapshotVersion>
         <classifier>sources</classifier>
         <extension>jar</extension>
-        <value>1.9.11-20250521.073027-2</value>
-        <updated>20250521073027</updated>
+        <value>1.9.11-20250527.072536-3</value>
+        <updated>20250527072536</updated>
       </snapshotVersion>
       <snapshotVersion>
         <classifier>javadoc</classifier>
         <extension>jar</extension>
-        <value>1.9.11-20250521.073027-2</value>
-        <updated>20250521073027</updated>
+        <value>1.9.11-20250527.072536-3</value>
+        <updated>20250527072536</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>pom</extension>
+        <value>1.9.11-20250527.072536-3</value>
+        <updated>20250527072536</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>module</extension>
+        <value>1.9.11-20250527.072536-3</value>
+        <updated>20250527072536</updated>
+      </snapshotVersion>
+      <snapshotVersion>
+        <extension>jar</extension>
+        <value>1.9.11-20250527.072536-3</value>
+        <updated>20250527072536</updated>
       </snapshotVersion>
     </snapshotVersions>
   </versioning>
