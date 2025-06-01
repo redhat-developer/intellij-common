@@ -10,6 +10,7 @@
  ******************************************************************************/
 package com.redhat.devtools.intellij.common.validation;
 
+import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
@@ -57,6 +58,10 @@ public class KubernetesResourceInfo {
 
     private static void create(JsonFile file, KubernetesResourceInfo resourceInfo) {
         JsonValue content = file.getTopLevelValue();
+        if (content instanceof JsonArray array) {
+            // only use the first element in the array
+            content = (JsonValue) array.getChildren()[0];
+        }
         if (content == null) {
             return;
         }
